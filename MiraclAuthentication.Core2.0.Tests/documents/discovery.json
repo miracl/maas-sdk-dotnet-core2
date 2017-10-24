@@ -1,0 +1,14 @@
+﻿{
+  "subject_types_supported": [ "public" ],
+  "userinfo_signing_alg_values_supported": [ "RS256", "RS384", "RS512" ],
+  "claims_supported": [ "sub", "iss", "email", "email_verified" ],
+  "issuer": "https://api.dev.miracl.net",
+  "response_types_supported": [ "code", "id_token", "id_token token", "code id_token", "code id_token token" ],
+  "token_endpoint": "https://api.dev.miracl.net/oidc/token",
+  "jwks_uri": "https://api.dev.miracl.net/oidc/certs",
+  "scopes_supported": [ "openid", "profile", "email" ],
+  "token_endpoint_auth_methods_supported": [ "client_secret_post", "client_secret_basic" ],
+  "id_token_signing_alg_values_supported": [ "RS256", "RS384", "RS512" ],
+  "userinfo_endpoint": "https://api.dev.miracl.net/oidc/userinfo",
+  "authorization_endpoint": "https://api.dev.miracl.net/authorize"
+}

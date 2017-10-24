@@ -1,0 +1,30 @@
+version: '#{build}'
+
+configuration: Release
+
+environment:
+  OPENCOVER_VER: 4.6.519
+  COVERALLS_NET_VER: 0.412
+  COVERAGE_FILTER: +[MiraclAuthentication]* -[MiraclAuthenticationTests]* -[SampleWebApp]*
+  COVERAGE_DIR: .\coverage
+  OPENCOVER_EXE: '%COVERAGE_DIR%\OpenCover.%OPENCOVER_VER%\tools\OpenCover.Console.exe'
+  COVERALLS_NET_EXE: '%COVERAGE_DIR%\coveralls.net.%COVERALLS_NET_VER%\tools\csmacnz.Coveralls.exe'
+  COVERALLS_REPO_TOKEN:
+    secure: cxFGnbuMOzKyckaNH2NOUKY0JTPeyEHWTffh7PifFsDuLSnFS17HSKgHuUUtynNy
+
+install:
+  - cmd: |
+      nuget install OpenCover -Version %OPENCOVER_VER% -OutputDirectory %COVERAGE_DIR%
+      nuget install coveralls.net -Version %COVERALLS_NET_VER% -OutputDirectory %COVERAGE_DIR%
+
+before_build:
+  - cmd: nuget restore
+
+build:
+  project: Authentication.sln
+  verbosity: minimal
+
+test_script:
+  - cmd: |
+      %OPENCOVER_EXE% -target:nunit3-console.exe -targetargs:".\MiraclAuthenticationTests\bin\Release\MiraclAuthenticationTests.dll" -filter:"%COVERAGE_FILTER%" -register:user -output:%COVERAGE_DIR%\coverage.xml
+      %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths

@@ -1,0 +1,82 @@
+﻿
+@{
+    ViewBag.Title = "Home Page";
+}
+<div class="jumbotron">
+    <h1>.Net Web Example</h1>
+    <h2>Login Page</h2>
+</div>
+<div class="row">
+    <div class="col-md-8">
+
+        @using (Html.BeginForm())
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                <button name="Logout" id="LogoutId" title="Test" value="Logout">Logout</button>
+            }
+            else
+            {
+                <div class="inner cover">
+                    <p class="lead">
+                        <a id="btmpin"></a>
+                    </p>
+                    <br />
+                    <br />
+                    <br />
+                    <p>
+                        @Html.CheckBox("UsePrerollId") &nbsp; Use PrerollId login
+                        <div hidden="hidden">
+                            <label for="PrerollId" id="lblPrerollId">PrerollId</label>:
+                            <br />
+                            @Html.TextBox("PrerollId", string.Empty, new { style = "width:500px" })
+                        </div>
+                    </p>
+                </div>
+            }
+        }
+
+        <br />
+        <br />
+        <br />
+
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <div class="col-md-10">
+                <h3>Identity claims</h3>
+                <p>
+                    <dl>
+                        @foreach (var claim in User.Claims)
+                        {
+                            <dt>@claim.Type</dt>
+                            <dd>@claim.Value</dd>
+                        }
+                    </dl>
+                </p>
+            </div>
+        }
+
+    </div>
+
+    @section scripts{
+        <script src="<<Insert correct mpad url here>>" data-authurl="@ViewBag.AuthorizationUri" data-element="btmpin"></script>
+        <script>
+            $("#UsePrerollId").change(
+            function () {
+                var prerollIdContainer = $("#PrerollId").parent();
+                prerollIdContainer.toggle();
+                if (prerollIdContainer.is(":visible")) {
+                    $('#PrerollId').change(function (event) {
+                        var prerollIdData = document.getElementById('PrerollId').value;
+                        $('#btmpin').attr("data-prerollid", prerollIdData);
+                    });
+                }
+                else {
+                    $('#btmpin').removeAttr("data-prerollid");
+                }
+            });
+        </script>
+    }
+
+</div>
