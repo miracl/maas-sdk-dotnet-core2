@@ -1,16 +1,17 @@
 version: '#{build}'
+image: Visual Studio 2017
 
 configuration: Release
 
 environment:
   OPENCOVER_VER: 4.6.519
   COVERALLS_NET_VER: 0.412
-  COVERAGE_FILTER: +[MiraclAuthentication]* -[MiraclAuthenticationTests]* -[SampleWebApp]*
+  COVERAGE_FILTER: +[MiraclAuthentication.Core2.0]* -[MiraclAuthentication.Core2.0.Tests]* -[MiraclAuthenticationApp.Core2.0]* -[MiraclExternalAuthenticationApp.Core2.0]*
   COVERAGE_DIR: .\coverage
   OPENCOVER_EXE: '%COVERAGE_DIR%\OpenCover.%OPENCOVER_VER%\tools\OpenCover.Console.exe'
   COVERALLS_NET_EXE: '%COVERAGE_DIR%\coveralls.net.%COVERALLS_NET_VER%\tools\csmacnz.Coveralls.exe'
   COVERALLS_REPO_TOKEN:
-    secure: cxFGnbuMOzKyckaNH2NOUKY0JTPeyEHWTffh7PifFsDuLSnFS17HSKgHuUUtynNy
+    secure: muIbtrK17bhXin1hpAppBFqV8t1p+oiVGYtH5P/DDcPVadBxnupP1woOBPDifIFF
 
 install:
   - cmd: |
@@ -26,5 +27,6 @@ build:
 
 test_script:
   - cmd: |
-      %OPENCOVER_EXE% -target:nunit3-console.exe -targetargs:".\MiraclAuthenticationTests\bin\Release\MiraclAuthenticationTests.dll" -filter:"%COVERAGE_FILTER%" -register:user -output:%COVERAGE_DIR%\coverage.xml
-      %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths
+      %OPENCOVER_EXE% -target:dotnet.exe -targetargs:"test -c Release MiraclAuthentication.Core2.0.Tests" -filter:"%COVERAGE_FILTER%" -register:user -oldStyle -output:%COVERAGE_DIR%\coverage.xml
+      %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths      
+      
