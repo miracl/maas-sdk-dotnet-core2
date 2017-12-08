@@ -16,7 +16,7 @@
 
 1. Download or Clone the project
 1. Open `Authentication.sln` with Visual Studio and build
-1. Reference the `MiraclAuthentication` project in your ASP.NET project so you could authenticate to the MIRACL server
+1. Reference the `MiraclAuthentication` project in your ASP.NET Core Web App project so you could authenticate to the MIRACL server
 
 ## Dependencies
 
@@ -57,11 +57,11 @@ client = new MiraclClient(new MiraclOptions
 });
 ```
 
-`CLIENT_ID` and `CLIENT_SECRET` are obtained from MIRACL server and are unique per application. The authentication scheme has to be specified to be same as the one set in the `ConfigureServices` method of the application. If you need the tokens (access token, id token and refresh token), the `SaveTokens` property has to be set.
+`CLIENT_ID` and `CLIENT_SECRET` are obtained from the MIRACL server and are unique per application. The authentication scheme has to be specified to be same as the one set in the `ConfigureServices` method of the application. If you need the tokens (access token, id token and refresh token), the `SaveTokens` property has to be set.
 
 #### Authorization flow
 
-If the user is not authorized, (s)he should scan the qr code with his/her phone app and authorize on the MIRACL server. This could be done as pass the authorize uri to the qr code by `ViewBag.AuthorizationUri = await client.GetAuthorizationRequestUrl(baseUri)` on the server and use it in the client with the following code:
+If the user is not authorized, (s)he should scan the qr code with his/her phone app and authorize on the MIRACL server. This could be done as pass the authorize uri to the QR code by `ViewBag.AuthorizationUri = await client.GetAuthorizationRequestUrlAsync(baseUri)` on the server and use it in the client with the following code:
 
 ```
 <a id="btmpin"></a>
@@ -74,11 +74,11 @@ Please refer to your distributor-specific documentation to find the correct url 
 
 When the user is being authorized, (s)he is returned to the `redirect uri` defined at creation of the application in the server. The redirect uri should be the same as the one used by the `MiraclClient` object (constructed by the appBaseUri + `CallbackPath` value of the `MiraclOptions` object by default).
 
-To complete the authorization the query of the received request should be passed to `client.ValidateAuthorization(Request.Query)`. This method will return `AuthenticationProperties` of the response or throw exception if the token validation fails.
+To complete the authorization the query of the received request should be passed to `client.ValidateAuthorizationAsync(Request.Query)`. This method will return `AuthenticationProperties` of the response or throw exception if the token validation fails.
 
 #### Status check and user data
 
-If the user is authenticated `client.UserId` and `client.Email` will return additional user data after `client.GetIdentity(tokenResponse)` is executed which itself returns the claims-based identity for granting a user to be signed in.
+If the user is authenticated `client.UserId` and `client.Email` will return additional user data after `client.GetIdentityAsync(tokenResponse)` is executed which itself returns the claims-based identity for granting a user to be signed in.
 If `null` is returned, the user is not authenticated or the token is expired and client needs to be authorized once more to access required data.
 
 Use `client.ClearUserInfo(false)` to drop user identity data.
@@ -128,27 +128,45 @@ In the current app this could be achieved with the following code:
 #### DVS flow
 
 DVS (designated verifier signature) scheme allows a client entity to sign a message/document (an important transaction) which could be verified only by the designated verifier. 
-After the client (mobile) app generates the message, it sends it to the server (banking) which calls `MiraclClient.DvsCreateDocumentHash` method to create its hash using SHA256 hashing algorithm. Then the client app should create its signature and pass it to the server. The server has to create a `Signature` object and pass it to the `MiraclClient.DvsVerifySignature` method together with the epoch time (in seconds) of the signature creation (timestamp). The `MiraclClient` object retrieves the DVS Public Key from the MFA Platform where the DVS service runs and verifies the signature with it. The `Signature` object should have the following properties:
+After the client (mobile) app generates the message, it sends it to the server (banking) which calls `MiraclClient.DvsCreateDocumentHash` method to create its hash using SHA256 hashing algorithm. Then the client app should create its signature and pass it to the server. The server has to create a `Signature` object and pass it to the `MiraclClient.DvsVerifySignatureAsync` method together with the epoch time (in seconds) of the signature creation (timestamp). The `MiraclClient` object retrieves the DVS Public Key from the MFA Platform where the DVS service runs and verifies the signature with it. The `Signature` object should have the following properties:
 - `Hash` - the hash of the signed document 
 - `MpinId` - the M-Pin ID used to generate the signature
 - `U` - the random commitment generated by the user
 - `V` - the proof of the signature
 - `PublicKey` - the user public key used in the key-escrow less scheme. Only if key-escrow less scheme is supported.
 
+#### Identity Registration Verification flow
+ 
+ There are different methods for verification of an identity when registering it to the Platform 
+ - standard email verification - the user enters the identity email, receives an email with a link to our Platform which, after a click, verifies the identity 
+ - custom email verification - the user enters the identity email, receives an email with a link to the Relying Party app where could be a custom logic for identity verification
+ - full custom verification which supports two user notification types  
+ 		- push - after the user has started the identity registration, the Platform sends a request to the Verification URL set by the customer in his/her Platform account settings where the identity is verified and activated for further PIN setup  
+ 		- pull - after the user has started the identity registration, the Relying Party application sends a request to the Platform to know if a registration for this identity has started. If so, a custom logic for its validating could be applied before activating it and continuing to setup PIN   
+ 
+ There are fields in the Platform customer settings for setting up the Verification Method, the New User Notification Type (if a Full Custom method is set) and one for the Verification URL (if a Full Custom Push verification method used).  
+ The methods which the Relying Party application should use to facilitate these operations are as follows: 
+ - `GetIdentityInfoAsync` - used to require identity information per its `hashMPinId` and `activateKey`
+ - `ActivateIdentityAsync` - activates the identity in the Platform and the user could continue its registration and setup a PIN
+ - `HandleNewIdentityPush` - validates the request from the Platform when Full Custom Verification with Push type used and return an `Identity` object
+ - `HandleNewIdentityPullAsync` - requests from the Platform if there is a started registration for the specified identity id and returns an `Identity` for it if so
+ 
 
 ## Samples
 
-Replace `CLIENT_ID` and `CLIENT_SECRET` in the `appsettings.json` file with your valid credential data from the MIRACL server or use the [recommended approach](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets) by Microsoft. `baseUri` (which is passed to the `MiraclClient.GetAuthorizationRequestUrlAsync` method in the first sample) should be the uri of your web application.
+Replace `CLIENT_ID`, `CLIENT_SECRET` and `CUSTOMER_ID` (if necessary) in the `appsettings.json` file with your valid credential data from the MIRACL server or use the [recommended approach](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets) by Microsoft. `baseUri` (which is passed to the `MiraclClient.GetAuthorizationRequestUrlAsync` method in the first sample) should be the uri of your web application.
 Note that the redirect uri, if not explicitly specified in the `MiraclOptions`, is constructed as `baseUri\login` (the default value of the `CallbackPath` property is `\login`) and it should be passed to the MIRACL server when requiring authentication credential.
+You have to setup the mpad.js url in the Views/Home/Index.cshtml too as explained in the [Authorization Flow section](https://github.com/miracl/maas-sdk-dotnet-core2/#authorization-flow).
 
 * `MiraclAuthenticationApp.Core2.0` demonstrates the usage of `MiraclClient` to authenticate to the MIRACL server
 
 * `MiraclExternalAuthenticationApp.Core2.0` demonstrates external authentication to the Miracl server. The login page has a `MIRACL` button which performs the authentication. Note that the application uses a database which should be migrated before used.
 In Visual Studio, you can use the Package Manager Console to apply pending migrations to the database by `PM> Update-Database`. Alternatively, you can apply pending migrations from a command prompt at your project directory by `> dotnet ef database update`. 
 
+* `MiraclIdentityVerificationApp.Core2.0` demonstrates the verification flows of an [identity registration](https://github.com/miracl/maas-sdk-dotnet-core2/#identity-registration-verification-flow) described above
 
 ## Sample Endpoints 
-The sample handles the following requests in order to serve as an authenticator for a mobile app:
+The `MiraclAuthenticationApp.Core2.0` sample handles the following requests in order to serve as an authenticator for a mobile app:
 * POST `/authzurl`
  This returns an http status of OK and data in the following json format:
 ```

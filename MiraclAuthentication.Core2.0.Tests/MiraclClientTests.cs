@@ -43,12 +43,14 @@ namespace MiraclAuthenticationTests
                                                                        "041c9e2ae817f033140a2085add0594643ca44381dae76e0241cbf790371a7f3c406b31ba86b3cd0d744f0a2e87dbcc32d19416d15aaae91f9122cb4d12cb78f07",
                                                                        "040ef9b951522009900127820a9a956486b9e11ad05e18e4e86931460d310a2ecf106c9935dc0775a41892577b2f96f87c556dbe87f8fcf7fda546ec21752beada",
                                                                        "0f9b60020f2a6108c052ba5d2ac0b24b8b7975ae2a2082ddb5d51b236662620e0c05f8310abe5fbda9ed80d638887ed2859f22b9c902bf88bd52dd083ce26e93144e03e61ad2e14722d29e21fde4eaa9f33f793db7da5e3f6211a7d99a8186e023c7fc60de7185a5d73d11b393530d0245256f7ecc0b1c7c96513b1c717a9b1b");
+        private const string NewUserToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjMxLTA3LTIwMTYifQ.eyJhdWQiOiIzMTE3YmYwNC02NTFhLTQzYmEtYWQzMi0zY2I4NDVmZmZiM2YiLCJldmVudHMiOnsibmV3VXNlciI6eyJ1c2VySUQiOiJhc2RAZXhhbXBsZS5jb20iLCJkZXZpY2VOYW1lIjoiQ2hyb21lIG9uIFdpbmRvd3MiLCJoYXNoTVBpbklEIjoiNTkzMWVkNDM2M2NiYzczYzg4ZDZhMTczYmRlNzU1NDZhNzhmMmMxNmZiZTkwOTQ5YThlYmM0ZTFiMWRiNjM1ZiIsImFjdGl2YXRlS2V5IjoiMjliOWFlYTFkZDhiNDI1OTRiZDgyMDllM2Y0OTdkZmE4MzgxOGZkZjhjZGQwMjczMDJmODVkNmVlN2UyMTYwZiIsImV4cGlyZVRpbWUiOjE1MTI2NDA1MzZ9fSwiZXhwIjoxNTEyNjQwNTM2LCJpYXQiOjE1MTI2MzY5MzYsImlzcyI6Imh0dHBzOi8vYXBpLmRldi5taXJhY2wubmV0Iiwic3ViIjoiYXNkQGV4YW1wbGUuY29tIn0.XYj_LpQdJhnWOOoM-otm71HU21jQ_rQ7MFvwxWlDiNEriBTVBKFuiDs7wbt6Fzg0NnXAmMYSc9mFKVwn0jnJSpPB16N4X8yLOXDY8ugt7sUckrEAdYE9Vd1r-N-YvxU_S3fy2b5Jq2cpAjhlvgm28TApH5uV5YLWRjwiWyVaCo48VZmUafttH6CZLiTru2JUMw5tjrnaDaAOYGCsmXs-QtWPHm307riCH86TG_tuiQdp7HZWOQEUzuQ851WE914qs1xpn8lHYl8N8eMiX79BQTUiMZN5yCzS2FzIjYn1Q-hCe9iIqZY24SNogVQljb3ZUv1TCWtMP02G6KibaR9K9A";
+        private const string ValidCustomerId = "3117bf04-651a-43ba-ad32-3cb845fffb3f";
         #endregion
 
         #region Tests
-        #region AuthorizationRequestUrl
+        #region GetAuthorizationRequestUrlAsync
         [Test]
-        public void Test_AuthorizationRequestUrl()
+        public void Test_GetAuthorizationRequestUrlAsync()
         {
             var client = InitClient();
             var url = GetRequestUrl(client, Endpoint).Result;
@@ -59,28 +61,28 @@ namespace MiraclAuthenticationTests
         }
 
         [Test]
-        public void Test_AuthorizationRequestUrl_NullUri()
+        public void Test_GetAuthorizationRequestUrlAsync_NullUri()
         {
             Assert.That(() => GetRequestUrl(new MiraclClient(), null),
                 Throws.TypeOf<ArgumentException>().And.Property("ParamName").EqualTo("baseUri"));
         }
 
         [Test]
-        public void Test_AuthorizationRequestUrl_InvalidUri()
+        public void Test_GetAuthorizationRequestUrlAsync_InvalidUri()
         {
             Assert.That(() => GetRequestUrl(new MiraclClient(), "Not a URI"),
                 Throws.TypeOf<ArgumentException>().And.Property("ParamName").EqualTo("baseUri"));
         }
 
         [Test]
-        public void Test_AuthorizationRequestUrl_NoOptions()
+        public void Test_GetAuthorizationRequestUrlAsync_NoOptions()
         {
             Assert.That(() => new MiraclClient().GetAuthorizationRequestUrlAsync(AuthorizeEndpoint),
-                Throws.TypeOf<ArgumentNullException>().And.Property("ParamName").EqualTo("MiraclOptions should be set!"));
+                Throws.TypeOf<ArgumentNullException>().And.Property("ParamName").EqualTo("options").And.Message.Contains("MiraclOptions should be set!"));
         }
 
         [Test]
-        public void Test_AuthorizationRequestUrl_NoConfiguration()
+        public void Test_GetAuthorizationRequestUrlAsync_NoConfiguration()
         {
             var client = InitClient();
             client.Options.Configuration = new OpenIdConnectConfiguration();
@@ -89,16 +91,16 @@ namespace MiraclAuthenticationTests
         }
         #endregion
 
-        #region ValidateAuthorization
+        #region ValidateAuthorizationAsync
         [Test]
-        public void Test_ValidateAuthorization_NullRequestQuery()
+        public void Test_ValidateAuthorizationAsync_NullRequestQuery()
         {
-            Assert.That(() => new MiraclClient().ValidateAuthorization(null),
+            Assert.That(() => new MiraclClient().ValidateAuthorizationAsync(null),
                 Throws.TypeOf<ArgumentNullException>().And.Property("ParamName").EqualTo("requestQuery"));
         }
 
         [Test]
-        public void Test_ValidateAuthorization_SkipUnrecognizedRequests()
+        public void Test_ValidateAuthorizationAsync_SkipUnrecognizedRequests()
         {
             var client = InitClient();
 
@@ -107,27 +109,27 @@ namespace MiraclAuthenticationTests
             var query = new MockQuery(dictionary);
 
             client.Options.SkipUnrecognizedRequests = true;
-            var res = client.ValidateAuthorization(query).Result;
+            var res = client.ValidateAuthorizationAsync(query).Result;
             Assert.That(res, Is.Null);
 
             client.Options.SkipUnrecognizedRequests = false;
-            Assert.That(() => client.ValidateAuthorization(query),
+            Assert.That(() => client.ValidateAuthorizationAsync(query),
                 Throws.TypeOf<ArgumentException>().And.Property("Message").StartWith("requestQuery does not have the proper"));
 
             dictionary.Add("state", "NotProtectedState");
             query = new MockQuery(dictionary);
 
             client.Options.SkipUnrecognizedRequests = true;
-            res = client.ValidateAuthorization(query).Result;
+            res = client.ValidateAuthorizationAsync(query).Result;
             Assert.That(res, Is.Null);
 
             client.Options.SkipUnrecognizedRequests = false;
-            Assert.That(() => client.ValidateAuthorization(query),
+            Assert.That(() => client.ValidateAuthorizationAsync(query),
                 Throws.TypeOf<ArgumentException>().And.Property("Message").StartWith("Invalid request properties"));
         }
 
         [Test]
-        public void Test_ValidateAuthorization_EmptyReturnedState()
+        public void Test_ValidateAuthorizationAsync_EmptyReturnedState()
         {
             var client = InitClient();
 
@@ -139,7 +141,7 @@ namespace MiraclAuthenticationTests
             dictionary.Add("state", client.Options.StateDataFormat.Protect(authProp));
             query = new MockQuery(dictionary);
 
-            Assert.That(() => client.ValidateAuthorization(query),
+            Assert.That(() => client.ValidateAuthorizationAsync(query),
                 Throws.TypeOf<ArgumentException>().And.Property("Message").StartWith("requestQuery does not have the proper"));
         }
 
@@ -166,7 +168,7 @@ namespace MiraclAuthenticationTests
 
             client.Options.Configuration.CheckSessionIframe = "check";
 
-            var properties = client.ValidateAuthorization(query).Result;
+            var properties = client.ValidateAuthorizationAsync(query).Result;
             Assert.That(properties, Is.Not.Null);
             Assert.AreEqual("MockToken", properties.GetTokenValue(OpenIdConnectParameterNames.AccessToken));
             Assert.AreEqual(properties.Items[OpenIdConnectSessionProperties.CheckSessionIFrame], "check");
@@ -174,36 +176,36 @@ namespace MiraclAuthenticationTests
         }
 
         [Test]
-        public void Test_ValidateAuthorization_NoOptions()
+        public void Test_ValidateAuthorizationAsync_NoOptions()
         {
-            Assert.That(() => new MiraclClient().ValidateAuthorization(new MockQuery(), "http://nothing/SigninMiracl"),
+            Assert.That(() => new MiraclClient().ValidateAuthorizationAsync(new MockQuery(), "http://nothing/SigninMiracl"),
                 Throws.TypeOf<InvalidOperationException>().And.Message.EqualTo("No Options found for authentication!"));
         }
 
         [Test]
-        public void Test_ValidateAuthorization_MissingCode()
+        public void Test_ValidateAuthorizationAsync_MissingCode()
         {
             var dictionary = new Dictionary<string, StringValues>();
             dictionary.Add(Constants.State, "state");
             var query = new MockQuery(dictionary);
 
-            Assert.That(() => new MiraclClient(new MiraclOptions()).ValidateAuthorization(query),
+            Assert.That(() => new MiraclClient(new MiraclOptions()).ValidateAuthorizationAsync(query),
                 Throws.TypeOf<ArgumentException>().And.Property("ParamName").EqualTo("requestQuery"));
         }
 
         [Test]
-        public void Test_ValidateAuthorization_MissingState()
+        public void Test_ValidateAuthorizationAsync_MissingState()
         {
             var dictionary = new Dictionary<string, StringValues>();
             dictionary.Add(Constants.Code, "code");
             var query = new MockQuery(dictionary);
 
-            Assert.That(() => new MiraclClient(new MiraclOptions()).ValidateAuthorization(query),
+            Assert.That(() => new MiraclClient(new MiraclOptions()).ValidateAuthorizationAsync(query),
                 Throws.TypeOf<ArgumentException>().And.Property("ParamName").EqualTo("requestQuery"));
         }
 
         [Test]
-        public void Test_ValidateAuthorization_InvalidState()
+        public void Test_ValidateAuthorizationAsync_InvalidState()
         {
             MiraclOptions options = new MiraclOptions();
             var dataProtectionProvider = new EphemeralDataProtectionProvider();
@@ -221,12 +223,12 @@ namespace MiraclAuthenticationTests
             dictionary.Add("state", client.Options.StateDataFormat.Protect(authProp));
             var query = new MockQuery(dictionary);
 
-            Assert.That(() => client.ValidateAuthorization(query, "http://nothing/SigninMiracl"),
+            Assert.That(() => client.ValidateAuthorizationAsync(query, "http://nothing/SigninMiracl"),
                 Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid state!"));
         }
 
         [Test]
-        public void Test_ValidateAuthorization()
+        public void Test_ValidateAuthorizationAsync()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(TokenEndpoint).Respond("application/json", "{\"access_token\":\"MockToken\",\"expires_in\":600,\"id_token\":\"" + ValidIdToken + "\",\"refresh_token\":\"MockRefresh\",\"scope\":\"openid\",\"token_type\":\"Bearer\"}");
@@ -244,13 +246,13 @@ namespace MiraclAuthenticationTests
 
             var query = new MockQuery(dictionary);
 
-            var response = client.ValidateAuthorization(query).Result;
+            var response = client.ValidateAuthorizationAsync(query).Result;
             Assert.That(response, Is.Not.Null);
             Assert.AreEqual("MockToken", response.GetTokenValue(OpenIdConnectParameterNames.AccessToken));
         }
 
         [Test]
-        public void Test_ValidateAuthorization_Error()
+        public void Test_ValidateAuthorizationAsync_Error()
         {
             var err = "some error";
 
@@ -259,7 +261,7 @@ namespace MiraclAuthenticationTests
             dictionary.Add(Constants.Error, err);
             var query = new MockQuery(dictionary);
 
-            Assert.That(() => new MiraclClient(new MiraclOptions()).ValidateAuthorization(query),
+            Assert.That(() => new MiraclClient(new MiraclOptions()).ValidateAuthorizationAsync(query),
                 Throws.TypeOf<OpenIdConnectProtocolException>().And.Message.EqualTo("Error in the authorization response: " + err));
         }
 
@@ -281,48 +283,48 @@ namespace MiraclAuthenticationTests
             dictionary.Add(Constants.Code, "MockCode");
             var query = new MockQuery(dictionary);
 
-            Assert.That(() => client.ValidateAuthorization(query, "http://nothing/login"),
-                 Throws.TypeOf<SecurityTokenException>().And.Message.StartsWith("Unable to read id token"));
+            Assert.That(() => client.ValidateAuthorizationAsync(query, "http://nothing/login"),
+                 Throws.TypeOf<SecurityTokenException>().And.Message.StartsWith("Unable to read token"));
 
-            Assert.That(() => client.ValidateAuthorizationCode("MockCode", "invalidUser@code.com"),
+            Assert.That(() => client.ValidateAuthorizationCodeAsync("MockCode", "invalidUser@code.com"),
                 Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Wrong token data!"));
 
             mockHttp.Clear();
             mockHttp.When(TokenEndpoint).Respond("application/json", "{\"access_token\":\"MockToken\",\"expires_in\":600,\"id_token\":\"" + "eyJhbGciOiJSUzI1NiIsImtpZCI6IjMxLTA3LTIwMTYifQ.eyJhbXIiOlsidG9rZW4iXSwiYXVkIjoiZ251ZWkwN2JjeWVlOCIsImV4cCI6MTQ5MzAxNjc3NSwiaWF0IjoxNDkzMDE1ODc1LCJpc3MiOiJodHRwczovL2FwaS5kZXYubWlyYWNsLm5ldCIsIm5vbmNlIjoiODBmY2Q1M2QzNTc2NjIxZGE2MjNlMWZkYmU2YzdjNTE0MTZhOTc1YTNlNTM4OThjY2IwYmRlZWIwODRiZTQyZiIsInN1YiI6InBldHlhLmtvbGV2YUBtaXJhY2wuY29tIn0.invalidSignature" + "\",\"refresh_token\":\"MockRefresh\",\"scope\":\"openid\",\"token_type\":\"Bearer\"}");
-            Assert.That(() => client.ValidateAuthorization(query, "http://nothing/login"),
+            Assert.That(() => client.ValidateAuthorizationAsync(query, "http://nothing/login"),
                 Throws.TypeOf<SecurityTokenInvalidSignatureException>());
         }
         #endregion
 
-        #region ValidateAuthorizationCode
+        #region ValidateAuthorizationCodeAsync
         [Test]
-        public void Test_ValidateAuthorizationCode()
+        public void Test_ValidateAuthorizationCodeAsync()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(TokenEndpoint).Respond("application/json", "{\"access_token\":\"MockToken\",\"expires_in\":600,\"id_token\":\"" + ValidIdToken + "\",\"refresh_token\":\"MockRefresh\",\"scope\":\"openid\",\"token_type\":\"Bearer\"}");
 
             var client = InitClient(ValidClientId, null, mockHttp);
 
-            var response = client.ValidateAuthorizationCode("MockCode", "wrong@mail.me").Result;
+            var response = client.ValidateAuthorizationCodeAsync("MockCode", "wrong@mail.me").Result;
             Assert.That(response, Is.Null);
 
-            response = client.ValidateAuthorizationCode("MockCode", "petya.koleva@miracl.com").Result;
+            response = client.ValidateAuthorizationCodeAsync("MockCode", "petya.koleva@miracl.com").Result;
             Assert.That(response, Is.Not.Null);
             Assert.AreEqual("MockRefresh", response.GetTokenValue(OpenIdConnectParameterNames.RefreshToken));
             Assert.AreEqual("MockToken", response.GetTokenValue(OpenIdConnectParameterNames.AccessToken));
 
             client.Nonce = "Invalid nonce";
-            Assert.That(() => client.ValidateAuthorizationCode("MockCode", "petya.koleva@miracl.com"),
-                Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid nonce"));
+            Assert.That(() => client.ValidateAuthorizationCodeAsync("MockCode", "petya.koleva@miracl.com"),
+                Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid nonce."));
 
             mockHttp.Clear();
             mockHttp.When(TokenEndpoint).Respond("application/json", "{\"access_token\":\"MockToken\",\"expires_in\":600,\"id_token\":\"\",\"refresh_token\":\"MockRefresh\",\"scope\":\"openid\",\"token_type\":\"Bearer\"}");
-            Assert.That(() => client.ValidateAuthorizationCode("MockCode", "empty@id.token"),
+            Assert.That(() => client.ValidateAuthorizationCodeAsync("MockCode", "empty@id.token"),
                 Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid token data!"));
         }
 
         [Test]
-        public void Test_ValidateAuthorizationCode_UseTokenLifetime()
+        public void Test_ValidateAuthorizationCodeAsync_UseTokenLifetime()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(TokenEndpoint).Respond("application/json", "{\"access_token\":\"MockToken\",\"expires_in\":600,\"id_token\":\"" + ValidIdToken + "\",\"refresh_token\":\"MockRefresh\",\"scope\":\"openid\",\"token_type\":\"Bearer\"}");
@@ -330,7 +332,7 @@ namespace MiraclAuthenticationTests
             var client = InitClient(ValidClientId, null, mockHttp);
             client.Options.UseTokenLifetime = true;
 
-            var response = client.ValidateAuthorizationCode("MockCode", "petya.koleva@miracl.com").Result;
+            var response = client.ValidateAuthorizationCodeAsync("MockCode", "petya.koleva@miracl.com").Result;
             Assert.That(response, Is.Not.Null);
             Assert.AreEqual("MockRefresh", response.GetTokenValue(OpenIdConnectParameterNames.RefreshToken));
             Assert.AreEqual("MockToken", response.GetTokenValue(OpenIdConnectParameterNames.AccessToken));
@@ -338,7 +340,7 @@ namespace MiraclAuthenticationTests
         }
 
         [Test]
-        public void Test_ValidateAuthorizationCode_UnsuccessfulRequest()
+        public void Test_ValidateAuthorizationCodeAsync_UnsuccessfulRequest()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(UserEndpoint).Respond("text/html", "sth");
@@ -346,41 +348,41 @@ namespace MiraclAuthenticationTests
 
             var client = InitClient(null, null, mockHttp);
 
-            Assert.That(() => client.ValidateAuthorizationCode("MockCode", "petya.koleva@miracl.com"),
+            Assert.That(() => client.ValidateAuthorizationCodeAsync("MockCode", "petya.koleva@miracl.com"),
                 Throws.TypeOf<OpenIdConnectProtocolException>().And.Property("Message").StartsWith("Message contains error: "));
 
         }
 
         [Test]
-        public void Test_ValidateAuthorizationCode_InvalidTokenResponse()
+        public void Test_ValidateAuthorizationCodeAsync_InvalidTokenResponse()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(TokenEndpoint).Respond("application/json", "invalid response");
 
             var client = InitClient(null, null, mockHttp);
 
-            Assert.That(() => client.ValidateAuthorizationCode("MockCode", "petya.koleva@miracl.com"),
+            Assert.That(() => client.ValidateAuthorizationCodeAsync("MockCode", "petya.koleva@miracl.com"),
                 Throws.TypeOf<OpenIdConnectProtocolException>().And.Property("Message").StartsWith("Failed to parse token response body as JSON."));
         }
 
         [Test]
-        public void Test_ValidateAuthorizationCode_NoOptions()
+        public void Test_ValidateAuthorizationCodeAsync_NoOptions()
         {
-            Assert.That(() => new MiraclClient().ValidateAuthorizationCode(string.Empty, string.Empty),
+            Assert.That(() => new MiraclClient().ValidateAuthorizationCodeAsync(string.Empty, string.Empty),
                 Throws.TypeOf<ArgumentNullException>().And.Property("ParamName").EqualTo("MiraclOptions should be set!"));
         }
         #endregion
 
-        #region GetIdentity
+        #region GetIdentityAsync
         [Test]
-        public void Test_GetIdentity_NoOptions()
+        public void Test_GetIdentityAsync_NoOptions()
         {
-            Assert.That(() => new MiraclClient().GetIdentity(Constants.AuthenticationScheme),
+            Assert.That(() => new MiraclClient().GetIdentityAsync(Constants.AuthenticationScheme),
                 Throws.TypeOf<ArgumentNullException>().And.Property("ParamName").EqualTo("MiraclOptions should be set!"));
         }
 
         [Test]
-        public void Test_GetIdentity_WrongResponse()
+        public void Test_GetIdentityAsync_WrongResponse()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(UserEndpoint).Respond("text/html", "sth");
@@ -388,20 +390,20 @@ namespace MiraclAuthenticationTests
 
             var client = InitClient(ValidClientId, null, mockHttp);
 
-            var response = client.ValidateAuthorizationCode("MockCode", "petya.koleva@miracl.com").Result;
+            var response = client.ValidateAuthorizationCodeAsync("MockCode", "petya.koleva@miracl.com").Result;
             Assert.That(response, Is.Not.Null);
 
-            var result = client.GetIdentity(Constants.AuthenticationScheme).Result;
+            var result = client.GetIdentityAsync(Constants.AuthenticationScheme).Result;
             Assert.That(result, Is.Null);
         }
 
         [Test]
-        public void Test_GetIdentity_NoTokenEndpointUser()
+        public void Test_GetIdentityAsync_NoTokenEndpointUser()
         {
             var client = InitClient();
 
-            Assert.That(() => client.GetIdentity(Constants.AuthenticationScheme),
-             Throws.TypeOf<InvalidOperationException>().And.Message.EqualTo("ValidateAuthorization method should be called first!"));
+            Assert.That(() => client.GetIdentityAsync(Constants.AuthenticationScheme),
+             Throws.TypeOf<InvalidOperationException>().And.Message.EqualTo("ValidateAuthorizationAsync method should be called first!"));
         }
         #endregion
 
@@ -442,14 +444,14 @@ namespace MiraclAuthenticationTests
 
             var query = new MockQuery(dictionary);
 
-            var response = client.ValidateAuthorization(query, "http://nothing/login").Result;
+            var response = client.ValidateAuthorizationAsync(query, "http://nothing/login").Result;
             Assert.That(response, Is.Not.Null);
             Assert.AreEqual(ValidAccessToken, response.GetTokenValue(OpenIdConnectParameterNames.AccessToken));
             Assert.AreEqual(ValidIdToken, response.GetTokenValue(OpenIdConnectParameterNames.IdToken));
             Assert.AreEqual("MockRefresh", response.GetTokenValue(OpenIdConnectParameterNames.RefreshToken));
             Assert.AreEqual("Bearer", response.GetTokenValue(OpenIdConnectParameterNames.TokenType));
 
-            var identity = client.GetIdentity(Constants.AuthenticationScheme).Result.Identity as ClaimsIdentity;
+            var identity = client.GetIdentityAsync(Constants.AuthenticationScheme).Result.Identity as ClaimsIdentity;
 
             Assert.That(identity, Is.Not.Null);
             Assert.That(identity, Has.Property("IsAuthenticated").True);
@@ -464,17 +466,17 @@ namespace MiraclAuthenticationTests
             Assert.That(identity.Claims.Any(c => c.Type.Equals("email")), Is.False);
 
             client.Options.GetClaimsFromUserInfoEndpoint = true;
-            identity = client.GetIdentity(Constants.AuthenticationScheme).Result.Identity as ClaimsIdentity;
+            identity = client.GetIdentityAsync(Constants.AuthenticationScheme).Result.Identity as ClaimsIdentity;
             var claim = identity.Claims.First(c => c.Type.Equals("email"));
             Assert.That(claim.Value, Is.EqualTo("petya.koleva@miracl.com"));
         }
 
         [Test]
-        public void Test_TryGetValue()
+        public void Test_TryGetUserInfoValue()
         {
             var client = new MiraclClient();
             client.UserJson = JObject.Parse("{\"sub\":\"noone@miracl.com\"}");
-            Assert.That(client.TryGetValue("sub"), Is.EqualTo("noone@miracl.com"));
+            Assert.That(client.TryGetUserInfoValue("sub"), Is.EqualTo("noone@miracl.com"));
         }
 
         [Test]
@@ -561,96 +563,96 @@ namespace MiraclAuthenticationTests
         }
 
         [Test]
-        public void Test_DvsVerifySignature()
+        public void Test_DvsVerifySignatureAsync()
         {
             MiraclClient client = InitClient();
 
-            var resp = client.DvsVerifySignature(SignatureToVerify, 0).Result;
+            var resp = client.DvsVerifySignatureAsync(SignatureToVerify, 0).Result;
 
             Assert.IsTrue(resp.IsSignatureValid);
             Assert.AreEqual(VerificationStatus.ValidSignature, resp.Status);
         }
 
         [Test]
-        public void Test_DvsVerifySignature_InvalidSignature()
+        public void Test_DvsVerifySignatureAsync_InvalidSignature()
         {
             MiraclClient client = InitClient();
 
-            Assert.That(() => client.DvsVerifySignature(null, 0),
+            Assert.That(() => client.DvsVerifySignatureAsync(null, 0),
                Throws.TypeOf<ArgumentNullException>().And.Message.Contains("Signature cannot be null"));
         }
 
         [Test]
-        public void Test_DvsVerifySignature_InvalidTimestamp()
+        public void Test_DvsVerifySignatureAsync_InvalidTimestamp()
         {
             var client = new MiraclClient();
 
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, -1),
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, -1),
                Throws.TypeOf<ArgumentException>().And.Message.Contains("Timestamp cannot has a negative value"));
         }
 
         [Test]
-        public void Test_DvsVerifySignature_NullClientOptions()
+        public void Test_DvsVerifySignatureAsync_NullClientOptions()
         {
             var client = new MiraclClient();
 
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, 0),
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, 0),
                Throws.TypeOf<InvalidOperationException>().And.Message.Contains("No Options for verification - client credentials are used for the verification"));
         }
 
         [Test]
-        public void Test_DvsVerifySignature_NullClientRsaPublicKey()
+        public void Test_DvsVerifySignatureAsync_NullClientRsaPublicKey()
         {
             var client = new MiraclClient(new MiraclOptions());
 
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, 0),
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, 0),
               Throws.TypeOf<ArgumentException>().And.Message.Contains("DVS public key not found"));
         }
 
         [TestCase(HttpStatusCode.Unauthorized, VerificationStatus.BadPin)]
         [TestCase(HttpStatusCode.Gone, VerificationStatus.UserBlocked)]
         [TestCase(HttpStatusCode.Forbidden, VerificationStatus.MissingSignature)]
-        public void Test_DvsVerifySignature_ServerResponseStatusNotOK(HttpStatusCode respStatusCode, VerificationStatus expected)
+        public void Test_DvsVerifySignatureAsync_ServerResponseStatusNotOK(HttpStatusCode respStatusCode, VerificationStatus expected)
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Post, DvsVerifyEndpoint).Respond(respStatusCode, "application/json", string.Empty);
 
             var client = InitClient("MockClient", "MockSecret", mockHttp);
 
-            var resp = client.DvsVerifySignature(SignatureToVerify, 0).Result;
+            var resp = client.DvsVerifySignatureAsync(SignatureToVerify, 0).Result;
 
             Assert.IsFalse(resp.IsSignatureValid);
             Assert.AreEqual(expected, resp.Status);
         }
 
         [Test]
-        public void Test_DvsVerifySignature_ServerResponseStatusOK_InvalidResponse()
+        public void Test_DvsVerifySignatureAsync_ServerResponseStatusOK_InvalidResponse()
         {
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(HttpMethod.Post, DvsVerifyEndpoint).Respond("application/json", "{\"no-certificate\":\"ey.fQ.nD\"}");
             var client = InitClient("MockClient", "MockSecret", mockHttp);
 
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, 0),
-              Throws.TypeOf<ArgumentException>().And.Message.Contains("No `certificate` in the JSON response"));
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, 0),
+              Throws.TypeOf<ArgumentException>().And.Message.Contains("No `certificate` in the JSON response."));
 
             mockHttp.Clear();
             mockHttp.When(HttpMethod.Post, DvsVerifyEndpoint).Respond("application/json", "{\"certificate\":\"ey.fQ\"}");
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, 0),
-              Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid DVS token format"));
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, 0),
+              Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid DVS token format."));
 
             mockHttp.Clear();
             mockHttp.When(System.Net.Http.HttpMethod.Post, DvsVerifyEndpoint).Respond("application/json", "{\"certificate\":\"eyfQnD\"}");
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, 0),
-               Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid DVS token format"));
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, 0),
+               Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid DVS token format."));
 
             mockHttp.Clear();
             mockHttp.When(HttpMethod.Post, DvsVerifyEndpoint).Respond("application/json", "\"invalid\":\"json\"}");
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, 0),
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, 0),
                Throws.TypeOf<Newtonsoft.Json.JsonReaderException>());
         }
 
         [Test]
-        public void Test_DvsVerifySignature_ServerResponseStatusOK_RequestAndResponseHashesDiffer()
+        public void Test_DvsVerifySignatureAsync_ServerResponseStatusOK_RequestAndResponseHashesDiffer()
         {
             MiraclClient client = InitClient();
 
@@ -660,23 +662,23 @@ namespace MiraclAuthenticationTests
                                                 "040ef9b951522009900127820a9a956486b9e11ad05e18e4e86931460d310a2ecf106c9935dc0775a41892577b2f96f87c556dbe87f8fcf7fda546ec21752beada",
                                                 "0f9b60020f2a6108c052ba5d2ac0b24b8b7975ae2a2082ddb5d51b236662620e0c05f8310abe5fbda9ed80d638887ed2859f22b9c902bf88bd52dd083ce26e93144e03e61ad2e14722d29e21fde4eaa9f33f793db7da5e3f6211a7d99a8186e023c7fc60de7185a5d73d11b393530d0245256f7ecc0b1c7c96513b1c717a9b1b");
 
-            Assert.That(() => client.DvsVerifySignature(signature, 0),
+            Assert.That(() => client.DvsVerifySignatureAsync(signature, 0),
                Throws.TypeOf<ArgumentException>().And.Message.Contains("Signature hash and response hash do not match"));
         }
 
         [Test]
-        public void Test_DvsVerifySignature_ServerResponseStatusOK_RequestTimestampAfterResponseTimestamp()
+        public void Test_DvsVerifySignatureAsync_ServerResponseStatusOK_RequestTimestampAfterResponseTimestamp()
         {
             MiraclClient client = InitClient();
 
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, int.MaxValue),
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, int.MaxValue),
               Throws.TypeOf<ArgumentException>().And.Message.Contains("The transaction is signed before the issue time"));
         }
 
         [TestCase("eyJjQXQiOjk5OTk5OTk5OTksImV4cCI6MTQ5NzQ0NDQ2MSwiaGFzaCI6IjE1NzYwNDczOTc5ZDIwMjdiZWJjYTIyZDRlMGFlNDBmNDlkMDc1NmRkYTUwN2RlNzFkZjk5YmYwNGQyYTdkMDcifQ", "Invalid `cAt` value")]
         [TestCase("eyJjQXQiOjE0OTc0NDQ0NTEsImV4cCI6MTQ5NzQ0NDQ2MX0", "No `hash` in the JWT payload")]
         [TestCase("eyJleHAiOjE0OTc0NDQ0NjEsImhhc2giOiIxNTc2MDQ3Mzk3OWQyMDI3YmViY2EyMmQ0ZTBhZTQwZjQ5ZDA3NTZkZGE1MDdkZTcxZGY5OWJmMDRkMmE3ZDA3In0", "No `cAt` in the signature")]
-        public void Test_DvsVerifySignature_ServerResponseStatusOK_InvalidResponsePayload(string payload, string expected)
+        public void Test_DvsVerifySignatureAsync_ServerResponseStatusOK_InvalidResponsePayload(string payload, string expected)
         {
             string respContent = string.Format("{{\"certificate\":\"eyJhbGciOiJSUzI1NiIsImtpZCI6InMxIn0.{0}.A19LAJpEZjFhwor0bj02AGh9\"}}", payload);
 
@@ -685,12 +687,12 @@ namespace MiraclAuthenticationTests
 
             var client = InitClient("MockClient", "MockSecret", mockHttp);
 
-            Assert.That(() => client.DvsVerifySignature(SignatureToVerify, int.MaxValue),
+            Assert.That(() => client.DvsVerifySignatureAsync(SignatureToVerify, int.MaxValue),
               Throws.TypeOf<ArgumentException>().And.Message.Contains(expected));
         }
 
         [Test]
-        public void Test_DvsVerifySignature_ServerResponseStatusOK_PublicKeyNotMatching()
+        public void Test_DvsVerifySignatureAsync_ServerResponseStatusOK_PublicKeyNotMatching()
         {
             var client = InitClient();
             client.Options.DvsConfiguration.SigningKeys.Remove(client.Options.DvsConfiguration.SigningKeys.First());
@@ -702,7 +704,7 @@ namespace MiraclAuthenticationTests
                         Modulus = Base64UrlEncoder.DecodeBytes("kwBfKdZTTt8dD-o1VPXKCH4hi28-KUMsPy7OYBrk4lgCd1EHZCVvZdKkcjPW0kGjC3vuee7C5v516Siids684n_V8mznvLwNFGKJ3fdiubkxKc5cpgPrxH86uHr0sU")
                     }));
 
-            var resp = client.DvsVerifySignature(SignatureToVerify, 0).Result;
+            var resp = client.DvsVerifySignatureAsync(SignatureToVerify, 0).Result;
 
             Assert.IsFalse(resp.IsSignatureValid);
             Assert.AreEqual(VerificationStatus.InvalidSignature, resp.Status);
@@ -715,6 +717,306 @@ namespace MiraclAuthenticationTests
             string expected = "1789c9eeee7dcbf9a5e9b47374e244f85263dc45922a249d37f7ba9fd4efb850";
 
             Assert.AreEqual(expected, new MiraclClient().DvsCreateDocumentHash(document));
+        }
+        #endregion
+
+        #region PV
+        [Test]
+        public void Test_HandleNewIdentityPush()
+        {
+            var client = InitClient();
+            client.Options.CustomerId = ValidCustomerId;
+
+            var identity = client.HandleNewIdentityPush("{\"new_user_token\":\"" + NewUserToken + "\"}");
+
+            Assert.That(identity, Is.Not.Null);
+            Assert.That(identity.Info, Is.Not.Null);
+            Assert.That(identity.Info.Id, Is.EqualTo("asd@example.com"));
+            Assert.That(identity.Info.DeviceName, Is.EqualTo("Chrome on Windows"));
+            Assert.That(identity.MPinIdHash, Is.EqualTo("5931ed4363cbc73c88d6a173bde75546a78f2c16fbe90949a8ebc4e1b1db635f"));
+            Assert.That(identity.ActivateKey, Is.EqualTo("29b9aea1dd8b42594bd8209e3f497dfa83818fdf8cdd027302f85d6ee7e2160f"));
+            Assert.That(identity.ActivateExpireTime, Is.EqualTo(1512640536));
+        }
+
+        [Test]
+        public void Test_HandleNewIdentityPush_NullJson()
+        {
+            var client = new MiraclClient();
+
+            Assert.That(() => client.HandleNewIdentityPush(null),
+               Throws.TypeOf<ArgumentNullException>());
+        }
+
+        [TestCase("")]
+        [TestCase("invalid json")]
+        [TestCase("{invalid json}")]
+        public void Test_HandleNewIdentityPush_InvalidNewUserJson(string newUserJson)
+        {
+            var client = new MiraclClient();
+
+            Assert.That(() => client.HandleNewIdentityPush(newUserJson),
+               Throws.TypeOf<Newtonsoft.Json.JsonReaderException>());
+        }
+
+        [Test]
+        public void Test_HandleNewIdentityPush_MissingNewUserTokenInJson()
+        {
+            var client = new MiraclClient();
+
+            Assert.That(() => client.HandleNewIdentityPush("{\"token\": \"token_value\"}"),
+               Throws.TypeOf<ArgumentException>().And.Message.EqualTo("No `new_user_token` in the JSON input."));
+        }
+
+        [Test]
+        public void Test_HandleNewIdentityPullAsync()
+        {
+            var userPullResponse = "{\"userId\":\"userIdValue\",\"deviceName\":\"deviceNameValue\",\"hashMPinId\":\"hashMPinIdValue\",\"activateKey\":\"activateKeyValue\",\"expireTime\":1}";
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(Endpoint + "/activate/pull").Respond("application/json", userPullResponse);
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            var identity = client.HandleNewIdentityPullAsync("MockUserId").Result;
+
+            Assert.That(identity, Is.Not.Null);
+            Assert.That(identity.Info, Is.Not.Null);
+            Assert.That(identity.Info.Id, Is.EqualTo("userIdValue"));
+            Assert.That(identity.Info.DeviceName, Is.EqualTo("deviceNameValue"));
+            Assert.That(identity.MPinIdHash, Is.EqualTo("hashMPinIdValue"));
+            Assert.That(identity.ActivateKey, Is.EqualTo("activateKeyValue"));
+            Assert.That(identity.ActivateExpireTime, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Test_HandleNewIdentityPullAsync_ServerResponseStatusRequestTimeout()
+        {
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(Endpoint + "/activate/pull").Respond(HttpStatusCode.RequestTimeout, "application/json", string.Empty);
+
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            Assert.That(() => client.HandleNewIdentityPullAsync("MockUserId"),
+               Throws.TypeOf<Exception>().And.Message.EqualTo("No connection with the Platform at " + Endpoint + "/activate/pull."));
+        }
+
+        [Test]
+        public void Test_HandleNewIdentityPullAsync_UserIdNotFound()
+        {
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(Endpoint + "/activate/pull").Respond(HttpStatusCode.NotFound, "application/json", "{\"status\":\"UserID not found\",\"message\":\"\"}");
+
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            var identity = client.HandleNewIdentityPullAsync("MockUserId").Result;
+
+            Assert.That(identity.IsEmpty(), Is.True);
+        }
+
+        [Test]
+        public void Test_HandleNewIdentityPullAsync_InvalidResponse()
+        {
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(Endpoint + "/activate/pull").Respond("application/json", string.Empty);
+
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            var identity = client.HandleNewIdentityPullAsync("MockUserId").Result;
+
+            Assert.That(identity, Is.Null);
+
+            mockHttp.Clear();
+            mockHttp.When(Endpoint + "/activate/pull").Respond("application/json", "\"invalid\":\"json\"}");
+            Assert.That(() => client.HandleNewIdentityPullAsync("MockUserId"),
+                Throws.TypeOf<Exception>().And.Message.EqualTo("Cannot generate a user from the server response."));
+        }
+
+        [Test]
+        public void Test_ActivateIdentityAsync()
+        {
+            var activateUserResponse = "{\"status\":\"OK\",\"message\":\"Activated\"}";
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(Endpoint + "/activate/user").Respond("application/json", activateUserResponse);
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            Assert.That(client.ActivateIdentityAsync("hash", "key").Result, Is.EqualTo(HttpStatusCode.OK));
+        }
+
+        [TestCase("{\"status\":\"Not OK\",\"message\":\"Activated\"}")]
+        [TestCase("{\"status\":\"OK\",\"message\":\"Not Activated\"}")]
+        [TestCase("{\"st\":\"OK\",\"message\":\"Activated\"}")]
+        [TestCase("{\"status\":\"OK\",\"msg\":\"Activated\"}")]
+        [TestCase("{\"status\":\"OK\"}")]
+        [TestCase("{\"message\":\"Activated\"}")]
+        public void Test_ActivateIdentityAsync_ServerResponseStatusOK_InvalidResponse(string activateUserResponse)
+        {
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(Endpoint + "/activate/user").Respond("application/json", activateUserResponse);
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            Assert.That(client.ActivateIdentityAsync("hash", "key").Result, Is.EqualTo(HttpStatusCode.InternalServerError));
+        }
+
+        [TestCase("", "")]
+        [TestCase(null, null)]
+        [TestCase("", null)]
+        [TestCase(null, "")]
+        public void Test_ActivateIdentityAsync_InvalidInput(string hashMPinId, string activateKey)
+        {
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, Endpoint + "/activate/user").Respond(HttpStatusCode.NotFound, "application/json", string.Empty);
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            Assert.That(client.ActivateIdentityAsync(hashMPinId, activateKey).Result, Is.EqualTo(HttpStatusCode.NotFound));
+        }
+
+        [Test]
+        public void Test_GetIdentityInfoAsync()
+        {
+            var activateUserResponse = "{\"userId\":\"userIdValue\",\"deviceName\":\"deviceNameValue\"}";
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(Endpoint + Constants.GetIdentityInfoEndpoint).Respond("application/json", activateUserResponse);
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            var info = client.GetIdentityInfoAsync("hash", "key").Result;
+
+            Assert.That(info, Is.Not.Null);
+            Assert.That(info.Id, Is.EqualTo("userIdValue"));
+            Assert.That(info.DeviceName, Is.EqualTo("deviceNameValue"));
+        }
+
+        [Test]
+        public void Test_GetIdentityInfoAsync_ServerResponseStatusNotOK()
+        {
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, Endpoint + Constants.GetIdentityInfoEndpoint).Respond(HttpStatusCode.NotFound, "application/json", string.Empty);
+            var client = InitClient("MockClient", "MockSecret", mockHttp);
+
+            var info = client.GetIdentityInfoAsync("hash", "key").Result;
+
+            Assert.That(info, Is.Null);
+        }
+
+        [TestCase("{\"userId\":\"\",\"deviceName\":\"deviceNameValue\"}")]
+        [TestCase("{\"userId\":\"userIdValue\",\"deviceName\":\"\"}")]
+        [TestCase("{\"userId\":\"\",\"deviceName\":\"\"}")]
+        [TestCase("{\"userId\":null,\"deviceName\":\"deviceNameValue\"}")]
+        [TestCase("{\"userId\":\"userIdValue\",\"deviceName\":null}")]
+        [TestCase("{\"notUserId\":\"userIdValue\",\"deviceName\":\"deviceNameValue\"}")]
+        [TestCase("{\"userId\":\"userIdValue\",\"notDeviceName\":\"deviceNameValue\"}")]
+        [TestCase("{\"userId\":\"userIdValue\"}")]
+        [TestCase("{\"deviceName\":\"deviceNameValue\"}")]
+        public void Test_GetIdentityInfoAsync_ServerResponseStatusOK_InvalidResponse(string response)
+        {
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, Endpoint + Constants.GetIdentityInfoEndpoint).Respond("application/json", response);
+            var client = InitClient("MockClient", "MockSecret", mockHttp);
+
+            Assert.That(() => client.GetIdentityInfoAsync("hash", "key"),
+               Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid response."));
+        }
+
+        [TestCase("", "")]
+        [TestCase(null, null)]
+        [TestCase("", null)]
+        [TestCase(null, "")]
+        public void Test_GetIdentityInfoAsync_InvalidInput(string hashMPinId, string activateKey)
+        {
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(HttpMethod.Post, Endpoint + "/activate/user").Respond(HttpStatusCode.NotFound, "application/json", string.Empty);
+            MiraclOptions options = new MiraclOptions();
+            options.ClientId = "MockClientId";
+            options.ClientSecret = "MockSecret";
+            options.BackchannelHttpHandler = mockHttp;
+            options.Authority = Endpoint;
+            MiraclClient client = new MiraclClient(options);
+
+            Assert.That(client.GetIdentityInfoAsync(hashMPinId, activateKey).Result, Is.Null);
+        }
+
+        [TestCase(null, null, null, null, 0)]
+        [TestCase("", "", "", "", 0)]
+        public void Test_Identity_IsEmpty(string id, string deviceName, string mPinIdHash, string activateKey, Int64 activateExpireTime)
+        {
+            var identity = new Miracl.Identity(id, deviceName, mPinIdHash, activateKey, activateExpireTime);
+
+            Assert.IsTrue(identity.IsEmpty());
+        }
+
+        [Test]
+        public void Test_Identity_IsExpired()
+        {
+            var expiredIdentity = new Miracl.Identity("", "", "", "", 0);
+
+            Assert.IsTrue(expiredIdentity.IsExpired());
+
+            var expTime = (Int64)((DateTime.UtcNow.AddDays(1) - new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds);
+            var notExpiredIdentity = new Miracl.Identity("", "", "", "", expTime);
+
+            Assert.IsFalse(notExpiredIdentity.IsExpired());
+        }
+
+        [TestCase("{\"newUser\":{}}")]
+        [TestCase("{\"newUser\":{\"deviceName\":\"Chrome on Windows\",\"hashMPinID\":\"5931ed4363cbc73c88d6a173bde75546a78f2c16fbe90949a8ebc4e1b1db635f\",\"activateKey\":\"29b9aea1dd8b42594bd8209e3f497dfa83818fdf8cdd027302f85d6ee7e2160f\",\"expireTime\":1512640536}}")]
+        [TestCase("{\"newUser\":{\"userID\":\"asd@example.com\",\"hashMPinID\":\"5931ed4363cbc73c88d6a173bde75546a78f2c16fbe90949a8ebc4e1b1db635f\",\"activateKey\":\"29b9aea1dd8b42594bd8209e3f497dfa83818fdf8cdd027302f85d6ee7e2160f\",\"expireTime\":1512640536}}")]
+        [TestCase("{\"newUser\":{\"userID\":\"asd@example.com\",\"deviceName\":\"Chrome on Windows\",\"activateKey\":\"29b9aea1dd8b42594bd8209e3f497dfa83818fdf8cdd027302f85d6ee7e2160f\",\"expireTime\":1512640536}}")]
+        [TestCase("{\"newUser\":{\"userID\":\"asd@example.com\",\"deviceName\":\"Chrome on Windows\",\"hashMPinID\":\"5931ed4363cbc73c88d6a173bde75546a78f2c16fbe90949a8ebc4e1b1db635f\",\"expireTime\":1512640536}}")]
+        [TestCase("{\"newUser\":{\"userID\":\"asd@example.com\",\"deviceName\":\"Chrome on Windows\",\"hashMPinID\":\"5931ed4363cbc73c88d6a173bde75546a78f2c16fbe90949a8ebc4e1b1db635f\",\"activateKey\":\"29b9aea1dd8b42594bd8209e3f497dfa83818fdf8cdd027302f85d6ee7e2160f\"}}")]
+        [TestCase("{\"newUser\":{\"userID\":\"asd@example.com\",\"deviceName\":\"Chrome on Windows\",\"hashMPinID\":\"5931ed4363cbc73c88d6a173bde75546a78f2c16fbe90949a8ebc4e1b1db635f\",\"activateKey\":\"29b9aea1dd8b42594bd8209e3f497dfa83818fdf8cdd027302f85d6ee7e2160f\",\"expireTime\":\"invalid time\"}}")]
+        public void Test_CreateIdentity_InvalidUserData(string data)
+        {
+            var userData = new Claim("events", data);
+
+            Assert.That(() => new MiraclClient().CreateIdentity(userData),
+                Throws.TypeOf<ArgumentException>().And.Message.EqualTo("Invalid data for creating a new identity."));
+        }
+
+        [TestCase("")]
+        [TestCase(null)]
+        public void Test_TryGetTokenDataByName_EmptyOrNullPropertyName(string propertyName)
+        {
+            var userData = new Claim("events", "{\"newUser\":{\"userID\":\"asd@example.com\"}}");
+            var data = JObject.Parse(userData.Value).GetValue("newUser");
+
+            Assert.That(new MiraclClient().TryGetTokenDataByName(data, propertyName), Is.EqualTo(string.Empty));
         }
         #endregion
         #endregion

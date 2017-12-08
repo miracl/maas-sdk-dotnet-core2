@@ -1,0 +1,124 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<div class="jumbotron">
+    <h1>Identity Registration Verification Web Sample</h1>
+</div>
+<div class="row">
+    <div class="col-md-8">
+        @switch ((string)ViewBag.VerificationFlow)
+            {
+                case "StandardEmail":
+                <text>
+                <h3>Standard Flow Steps</h3>
+                <br />
+                Click the login button.<br />
+                Choose browser or QR code login and follow the description for creating a new identity.
+                <br /><br />
+                </text>
+                break;
+            case "CustomEmail":
+                <text>
+                <h3>Custom Email Flow Steps</h3><br />
+                Click the login button. <br />
+                Choose browser or QR code login and enter your new identity. <br />
+                Open the link from the received email to verify your identity. <br />
+                The <code>customEmailController</code> takes care of activating the identity (in this sample, we activate every not expired identity). <br />
+                After the identity is activated, the registration flow asks you to setup a PIN for it.  <br /><br />
+                </text>
+                break;
+            case "FullCustomPull":
+                <text>
+                <h3>Full Custom Pull Flow Steps</h3><br />
+                Navigate to <code>@Html.ActionLink("pullController", "Index", "pull", null, new { target = "_blank" })</code> for further use.<br />
+                Click the Login button and use the browser login or scan the QR code.<br />
+                Enter the email address to start a new identity registration and click Create Identity button.<br />
+                Navigate back to <code>@Html.ActionLink("pullController", "Index", "pull", null, new { target = "_blank" })</code> and verify the identity.<br />
+                Navigate back to Platform registration page to continue the identity registration and setup the identity PIN.<br /><br />
+                </text>
+                break;
+            case "FullCustomPush":
+                <text>
+                <h3>Full Custom Push Flow Steps</h3> <br />
+                Click the Login button and use the browser login or scan the QR code. <br />
+                After you enter your new identity, the Platform will send a request which is handled in the <code>pushController</code> where the identity validity is checked
+                (in this sample, we activate every not expired identity). <br />
+                Note that the request is sent to the <code>Verification URL</code> property of the Customer Settings in the Platform.<br />
+                After the identity is activated, the registration flow asks you to setup a PIN for it. <br /><br />
+                </text>
+                break;
+        }
+    </div>
+    <div class="col-md-8">
+
+        @using (Html.BeginForm())
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                <button name="Logout" id="LogoutId" title="Test" value="Logout">Logout</button>
+            }
+            else
+            {
+                <div class="inner cover">
+                    <p class="lead">
+                        <a id="btmpin"></a>
+                    </p>
+                    <br />
+                    <br />
+                    <br />
+                    <p>
+                        @Html.CheckBox("UsePrerollId") &nbsp; Use PrerollId login
+                        <div hidden="hidden">
+                            <label for="PrerollId" id="lblPrerollId">PrerollId</label>:
+                            <br />
+                            @Html.TextBox("PrerollId", string.Empty, new { style = "width:500px" })
+                        </div>
+                    </p>
+                </div>
+            }
+        }
+
+        <br />
+        <br />
+        <br />
+
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <div class="col-md-10">
+                <h3>Identity claims</h3>
+                <p>
+                    <dl>
+                        @foreach (var claim in User.Claims)
+                        {
+                            <dt>@claim.Type</dt>
+                            <dd>@claim.Value</dd>
+                        }
+                    </dl>
+                </p>
+            </div>
+        }
+
+    </div>
+
+    @section scripts{
+        <script src="<<Insert correct mpad url here>>" data-authurl="@ViewBag.AuthorizationUri" data-element="btmpin"></script>
+        <script>
+            $("#UsePrerollId").change(
+                function () {
+                    var prerollIdContainer = $("#PrerollId").parent();
+                    prerollIdContainer.toggle();
+                    if (prerollIdContainer.is(":visible")) {
+                        $('#PrerollId').change(function (event) {
+                            var prerollIdData = document.getElementById('PrerollId').value;
+                            $('#btmpin').attr("data-prerollid", prerollIdData);
+                        });
+                    }
+                    else {
+                        $('#btmpin').removeAttr("data-prerollid");
+                    }
+                });
+        </script>
+    }
+
+</div>

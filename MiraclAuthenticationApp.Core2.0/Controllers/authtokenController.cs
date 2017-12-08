@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
-using System.Net;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace MiraclAuthenticationApp.Controllers
 {
@@ -31,7 +27,7 @@ namespace MiraclAuthenticationApp.Controllers
                 return new StatusCodeResult(StatusCodes.Status400BadRequest);
             }
 
-            var authProperties = await HomeController.Client.ValidateAuthorizationCode(code.ToString(), userId.ToString());
+            var authProperties = await HomeController.Client.ValidateAuthorizationCodeAsync(code.ToString(), userId.ToString());
             if (authProperties == null)
             {
                 return new StatusCodeResult(StatusCodes.Status401Unauthorized);

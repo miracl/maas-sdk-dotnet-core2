@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
-using Newtonsoft.Json.Linq;
-using System.Text;
-using Microsoft.AspNetCore.Authorization;
-using MiraclAuthenticationApp.Models;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using MiraclAuthenticationApp.Models;
+using Newtonsoft.Json.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace MiraclAuthenticationApp.Controllers
 {
@@ -21,11 +16,11 @@ namespace MiraclAuthenticationApp.Controllers
         {
             if (Request.Query != null && !string.IsNullOrEmpty(Request.Query["code"]) && !string.IsNullOrEmpty(Request.Query["state"]))
             {
-                var properties = await HomeController.Client.ValidateAuthorization(Request.Query);
+                var properties = await HomeController.Client.ValidateAuthorizationAsync(Request.Query);
                 ClaimsPrincipal user;
                 if (properties != null)
                 {
-                    user = await HomeController.Client.GetIdentity();
+                    user = await HomeController.Client.GetIdentityAsync();
                     await Request.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, user);
                 }
 

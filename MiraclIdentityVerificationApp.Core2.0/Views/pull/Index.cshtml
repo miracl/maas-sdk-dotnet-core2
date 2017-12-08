@@ -1,0 +1,38 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Verify page</h2>
+
+@if (!ViewBag.ActivationFinished)
+{
+    using (Html.BeginForm())
+    {
+        <p>
+            <br />
+            <text> Enter the identity you've started the registration with:</text><br /><br />
+            <input id="id" type="email" name="id" /><br /><br />
+            <input type="submit" /><br />
+        </p>
+    }
+}
+else
+{
+    if (ViewBag.IsIdentityActivated)
+    {
+        <p>
+            <h3>Activation successful</h3><br />
+            You can now close this window.<br />
+            If you have any issues, please contact our support.
+        </p>
+    }
+    else
+    {
+        <p>
+            <h3>ACTIVATION FAILED</h3><br />
+            There was a problem with activating your account. <br />
+            Press 'Resend email' from your MIRACL Trust® client app to try again.<br />
+            If you have any issues please contact our support.
+        </p>
+    }
+}
