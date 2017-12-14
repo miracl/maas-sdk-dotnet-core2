@@ -97,7 +97,7 @@ namespace Miracl
                 AuthenticationProperties properties;
                 try
                 {
-                    properties = await client.ValidateAuthorization(Request.Query);
+                    properties = await client.ValidateAuthorizationAsync(Request.Query);
                     if (properties == null)
                     {
                         if (Options.SkipUnrecognizedRequests)
@@ -113,7 +113,7 @@ namespace Miracl
                     }
 
                     ReadNonceCookie(client.Nonce);
-                    user = await client.GetIdentity(ClaimsIssuer);
+                    user = await client.GetIdentityAsync(ClaimsIssuer);
                 }
                 catch (ArgumentException ae)
                 {

@@ -1,0 +1,59 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+@{
+    ViewBag.Title = "Token response";
+}
+<h1>.Net Web Example</h1>
+<h2>Logged in session</h2>
+
+<br />
+<div>
+    Hi, <b>@ViewBag.Client.UserId</b> !
+</div>
+
+<br />
+<div>
+    @using (Html.BeginForm("Index", "Home", FormMethod.Post))
+    {
+        <button name="Logout" id="LogoutId" title="Test" value="Logout" type="submit">Logout</button>
+    }
+</div>
+<br />
+<br />
+
+@if (ViewBag.IdentityTokenParsed != null)
+{
+    <p>
+
+        <strong>Identity token:</strong>
+
+        <pre>@ViewBag.IdentityTokenParsed</pre>
+    </p>
+}
+@if (ViewBag.AccessTokenParsed != null)
+{
+    <p>
+
+        <strong>Access token:</strong>
+
+        <pre>@ViewBag.AccessTokenParsed</pre>
+    </p>
+}
+@if (ViewBag.ExpiresAt != null)
+{
+    <p>
+        <strong>Expires (UTC time):</strong>
+        <br />
+        <pre>@ViewBag.ExpiresAt</pre>
+    </p>
+}
+@if (ViewBag.RefreshTokenParsed != null)
+{
+    <p>
+        <strong>Refresh token:</strong>
+        <br />
+        <pre>@ViewBag.RefreshTokenParsed</pre>
+    </p>
+}

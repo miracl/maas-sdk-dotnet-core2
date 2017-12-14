@@ -53,12 +53,7 @@ namespace Miracl
 
                 options.StringDataFormat = new SecureDataFormat<string>(new StringSerializer(), dataProtector);
             }
-            
-            if (string.IsNullOrEmpty(options.TokenValidationParameters.ValidAudience) && !string.IsNullOrEmpty(options.ClientId))
-            {
-                options.TokenValidationParameters.ValidAudience = options.ClientId;
-            }
-
+    
             if (options.Backchannel == null)
             {
                 options.Backchannel = new HttpClient(options.BackchannelHttpHandler ?? new HttpClientHandler());

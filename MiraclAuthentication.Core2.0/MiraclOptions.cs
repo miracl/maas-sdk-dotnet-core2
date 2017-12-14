@@ -38,5 +38,13 @@ namespace Miracl
         //     and the Backchannel properties will not be used. This information should not
         //     be updated during request processing.
         public OpenIdConnectConfiguration DvsConfiguration { get; set; }
+
+        /// <summary>
+        /// Gets or sets the customer identifier registered in the MIRACL platform.
+        /// </summary>
+        /// <value>
+        /// The customer identifier.
+        /// </value>
+        public string CustomerId { get; set; }
     }
 }
