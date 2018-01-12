@@ -1,0 +1,52 @@
+﻿@model IList<MiraclIdentityVerificationApp.Controllers.PushViewModel>
+@if (Model.Count() > 0)
+{
+    <h3>
+        In order to start using an identity click its Activate button.
+    </h3>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Id</th>
+                    <th scope="col">Device name</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.Count(); i++)
+                {
+                    <tr>
+                        <td class="col-md-4">@Html.DisplayFor(m => m[i].Identity.Info.Id)</td>
+                        <td class="col-md-4">@Html.DisplayFor(m => m[i].Identity.Info.DeviceName)</td>
+
+                        @switch (Model[i].Status)
+                        {
+                            case MiraclIdentityVerificationApp.Controllers.IdentityStatus.Pending:
+                                <td class="col-md-4">
+                                    <form asp-controller="push" asp-action="Activate" data-ajax="true" data-ajax-method="POST">
+                                        @Html.Hidden("mPinIdHash", Model[i].Identity.ActivationParams.MPinIdHash)
+                                        <input type="submit" value="Activate" class="btn btn-primary" />
+                                    </form>
+                                </td>
+                                break;
+                            case MiraclIdentityVerificationApp.Controllers.IdentityStatus.Activated:
+                                <td class="col-md-4"><input type="submit" value="Activated" class="btn btn-success disabled" /></td>
+                                break;
+                            case MiraclIdentityVerificationApp.Controllers.IdentityStatus.Expired:
+                                <td class="col-md-4"><input type="submit" value="Expired" class="btn disabled" /></td>
+                                break;
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <h3>
+        Start the identity registration with full custom push flow from the Login button in the previous page and come back here to activate the user.
+    </h3>
+}

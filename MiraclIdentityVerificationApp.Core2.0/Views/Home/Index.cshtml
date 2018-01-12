@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewBag.Title = "Home Page";
 }
 <div class="jumbotron">
@@ -40,9 +40,10 @@
             case "FullCustomPush":
                 <text>
                 <h3>Full Custom Push Flow Steps</h3> <br />
+                Navigate to <code>@Html.ActionLink("pushController", "Index", "push", null, new { target = "_blank" })</code> for further use.<br />
                 Click the Login button and use the browser login or scan the QR code. <br />
-                After you enter your new identity, the Platform will send a request which is handled in the <code>pushController</code> where the identity validity is checked
-                (in this sample, we activate every not expired identity). <br />
+                Enter the email address to start a new identity registration and click Create Identity button.<br />
+                Navigate back to <code>@Html.ActionLink("pushController", "Index", "push", null, new { target = "_blank" })</code> and verify the identity.<br />
                 Note that the request is sent to the <code>Verification URL</code> property of the Customer Settings in the Platform.<br />
                 After the identity is activated, the registration flow asks you to setup a PIN for it. <br /><br />
                 </text>
