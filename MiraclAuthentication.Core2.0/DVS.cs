@@ -104,7 +104,7 @@ namespace Miracl
         /// <value>
         /// The public key.
         /// </value>
-        [JsonProperty("public-key")]
+        [JsonProperty("publicKey")]
         public string PublicKey { get; set; }
 
         /// <summary>

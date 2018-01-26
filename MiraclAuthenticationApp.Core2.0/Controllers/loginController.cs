@@ -17,12 +17,13 @@ namespace MiraclAuthenticationApp.Controllers
             if (Request.Query != null && !string.IsNullOrEmpty(Request.Query["code"]) && !string.IsNullOrEmpty(Request.Query["state"]))
             {
                 var properties = await HomeController.Client.ValidateAuthorizationAsync(Request.Query);
-                ClaimsPrincipal user;
-                if (properties != null)
+                if (properties == null)
                 {
-                    user = await HomeController.Client.GetIdentityAsync();
-                    await Request.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, user);
+                    return View("Error");
                 }
+
+                ClaimsPrincipal user = await HomeController.Client.GetIdentityAsync();
+                await Request.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, user);
 
                 var idToken = properties.GetTokenValue(OpenIdConnectParameterNames.IdToken);
                 if (!string.IsNullOrEmpty(idToken))

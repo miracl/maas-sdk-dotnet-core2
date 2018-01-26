@@ -1,0 +1,209 @@
+﻿@{
+    ViewBag.Title = "DVS sign";
+}
+<div>
+    <br />
+    <div id="dvsRegisterResponse">
+        <span>
+            After you have been successfully authenticated you could register the identity to the DVS service in order to sign documents with it.
+            <br />
+            Please, press the button to proceed.
+        </span>
+    </div>
+    <br />
+    <div id="dvsRegister">
+        <a class="btn btn-primary" onclick="dvsRegister()">DVS register</a>
+    </div>
+    <div id="dvsSign" class="hidden">
+        <label for="doc">Enter text to be signed: </label>
+        <br />
+        <textarea id="doc" style="margin-bottom:10px; margin-top:5px" rows="4" cols="50"></textarea>
+        <br />
+        <a class="btn btn-primary" onclick="dvsSign($('#doc').val())">Sign</a>
+        <div id="signature" class="hidden">
+            <br />
+            <strong>Signature:</strong>
+            <pre id="signatureData"></pre>
+            <a class="btn btn-primary" onclick="dvsVerifySignature($('#signatureData').html())">Verify signature</a>
+        </div>
+        <br />
+        <div id="verificationResult" class="hidden">
+            <strong>Verification result:</strong>
+            <pre></pre>
+        </div>
+    </div>
+</div>
+<hr />
+<div>
+    @using (Html.BeginForm("Index", "Home", FormMethod.Post))
+    {
+        <span>You have been authenticated with identity <b id="userId">@ViewBag.Client.UserId</b> which has the following data.</span>
+        <br />
+        <span>If you want to logout, press the button.</span>
+        <button id="LogoutId" class="btn" name="Logout" value="Logout" type="submit">Logout</button>
+    }
+</div>
+<br />
+<p>
+    <strong>Access token:</strong>
+    <pre>@ViewBag.AccessTokenParsed</pre>
+</p>
+@if (ViewBag.ExpiresAt != null)
+{
+    <p>
+        <strong>Expires (UTC time):</strong>
+        <br />
+        <pre>@ViewBag.ExpiresAt</pre>
+    </p>
+}
+
+@section scripts{
+    <script src="http://cdn.miracl.net/mfa-client-js/latest/mfa.js"></script>
+    <script>
+        var userId = "@ViewBag.Client.UserId";
+        var accessToken = "@ViewBag.AccessToken";
+
+        function getLocalEntropy() {
+            var crypto,
+                buffer,
+                entropyHex,
+                i;
+
+            if (typeof window !== "undefined") {
+                crypto = window.crypto || window.msCrypto;
+            }
+
+            if (typeof crypto === "undefined") {
+                return "";
+            }
+
+            buffer = new Uint32Array(8);
+            crypto.getRandomValues(buffer);
+
+            entropyHex = "";
+            for (i = 0; i < buffer.length; i++) {
+                entropyHex = entropyHex + buffer[i].toString(16);
+            }
+
+            return entropyHex;
+        }
+
+        function isRegistered(userId) {
+            return mfa.users.exists(userId) && mfa.users.get(userId, "state") === mfa.users.states.register;
+        }
+
+        var mfa = new Mfa({
+            server: "@ViewBag.Client.Options.Authority",
+            customerId: "@ViewBag.Client.Options.CustomerId",
+            seed: getLocalEntropy(),
+            clientId: "@ViewBag.Client.Options.ClientId"
+        });
+
+        if (isRegistered(userId)) {
+            $("#dvsRegister").addClass("hidden");
+            $("#dvsSign").removeClass("hidden");
+
+            var element = $("#dvsRegisterResponse > span");
+            element.removeClass("text-danger");
+            element.html("An identity <b>@ViewBag.Client.UserId</b> has been registered for DVS. Now you can sign documents with it.");
+        }
+
+        function dvsRegister() {
+            if (!isRegistered(userId)) {
+                var pinValue;
+                var isPinValid = false;
+                while (!isPinValid) {
+                    pinValue = prompt("Please, set up PIN (accepts only 4 digits)");
+                    if (pinValue === null) {
+                        return;
+                    }
+
+                    isPinValid = /^\d{4}$/.test(pinValue);
+                }
+
+                var successCb = function () {
+                    var element = $("#dvsRegisterResponse > span");
+                    element.removeClass("text-danger");
+                    element.html("An identity <b>@ViewBag.Client.UserId</b> has been registered for DVS. Now you can sign documents with it.");
+
+                    $("#dvsRegister").addClass("hidden");
+                    $("#dvsSign").removeClass("hidden");
+                };
+
+                var errorCb = function (error) {
+                    var element = $("#dvsRegisterResponse > span");
+                    element.addClass("text-danger");
+                    element.html(error.message);
+                    console.log(error);
+                };
+
+                var pinCb = function (passPin) {
+                    passPin(pinValue);
+                };
+
+                mfa.registerDvs(userId, accessToken, pinCb, successCb, errorCb);
+            } else {
+                $("#dvsRegister").addClass("hidden");
+                $("#dvsSign").removeClass("hidden");
+            }
+        }
+
+        function dvsSign(doc) {
+            var pinValue;
+            var isPinValid = false;
+            while (!isPinValid) {
+                pinValue = prompt("Please, enter PIN (accepts only 4 digits)");
+                if (pinValue === null) {
+                    return;
+                }
+
+                isPinValid = /^\d{4}$/.test(pinValue);
+            }
+
+            $("#verificationResult").addClass("hidden");
+
+            if (isRegistered(userId)) {
+                $.ajax({
+                    url: "@Url.Action("CreateDocumentHash", "login")",
+                    type: "POST",
+                    data: { document: doc },
+                    dataType: "json",
+                    cache: false,
+                    success: function (documentData) {
+                        try {
+                            var s = mfa.signMessage(userId, pinValue, documentData.hash, documentData.timestamp);
+
+                            var signature = {
+                                mpinId: mfa.users.get(userId, "mpinId"),
+                                publicKey: mfa.users.get(userId, "publicKey"),
+                                u: s.U,
+                                v: s.V,
+                                hash: documentData.hash,
+                                timestamp: documentData.timestamp
+                            };
+
+                            $("#signatureData").html(JSON.stringify(signature, null, 4));
+                            $("#signature").removeClass("hidden");
+                        } catch (err) {
+                            alert(err);
+                        }
+                    }
+                })
+            }
+        }
+
+        function dvsVerifySignature(signature) {
+            $.ajax({
+                    url: "@Url.Action("VerifySignature", "login")",
+                    type: "POST",
+                    data: { verificationData: signature },
+                    dataType: "json",
+                    cache: false,
+                    success: function (res) {
+                        $("#verificationResult").removeClass("hidden");
+                        $("#verificationResult > pre").html(JSON.stringify(res, null, 4));
+                    }
+                })
+        }
+    </script>
+}

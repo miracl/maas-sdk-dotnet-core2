@@ -163,6 +163,8 @@ You have to setup the mpad.js url in the Views/Home/Index.cshtml too as explaine
 * `MiraclExternalAuthenticationApp.Core2.0` demonstrates external authentication to the Miracl server. The login page has a `MIRACL` button which performs the authentication. Note that the application uses a database which should be migrated before used.
 In Visual Studio, you can use the Package Manager Console to apply pending migrations to the database by `PM> Update-Database`. Alternatively, you can apply pending migrations from a command prompt at your project directory by `> dotnet ef database update`. 
 
+* `MiraclDvsSigningApp.Core2.0` demonstrates the [DVS flow](https://github.com/miracl/maas-sdk-dotnet-core2/#dvs-flow) described above
+
 * `MiraclIdentityVerificationApp.Core2.0` demonstrates the verification flows of an [identity registration](https://github.com/miracl/maas-sdk-dotnet-core2/#identity-registration-verification-flow) described above
 
 ## Sample Endpoints 
