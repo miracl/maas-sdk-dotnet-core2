@@ -1,0 +1,28 @@
+﻿@model IList<MiraclIdentityVerificationApp.Controllers.PushViewModel>
+@{
+    ViewBag.Title = "Push";
+}
+
+<h2>Verify page</h2>
+
+<div id="identities">
+    @Html.Partial("_IdentitiesTablePartial", Model)
+</div>
+
+@section scripts{
+    <script>
+        function getList() {
+                $.ajax({
+                url: "@Url.Action("GetIdentities", "push")",
+                type: "GET",
+                dataType: "html",
+                cache: false,
+                success: function (res) {
+                    $("#identities").html(res);
+                }
+            })
+        }
+
+        setInterval(getList, 2000);
+    </script>
+}

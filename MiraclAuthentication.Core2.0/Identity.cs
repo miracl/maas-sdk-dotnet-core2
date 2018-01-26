@@ -17,12 +17,23 @@ namespace Miracl
         /// <param name="mPinIdHash">The hash of the M-PIN id.</param>
         /// <param name="activateKey">The key used to activate the identity.</param>
         /// <param name="activateExpireTime">Timestamp used to determine if a registration session is still active.</param>
-        public Identity([JsonProperty("userId")] string id, string deviceName, string mPinIdHash, string activateKey, Int64 activateExpireTime)
+        [JsonConstructor]
+        public Identity([JsonProperty("userId")] string id, string deviceName, [JsonProperty("hashMPinID")] string mPinIdHash, string activateKey, Int64 activateExpireTime)
         {
             this.Info = new IdentityInfo(id, deviceName);
-            this.MPinIdHash = mPinIdHash;
-            this.ActivateKey = activateKey;
+            this.ActivationParams = new IdentityActivationParams(mPinIdHash, activateKey);
             this.ActivateExpireTime = activateExpireTime;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Identity" /> class.
+        /// </summary>
+        /// <param name="info">The identity information.</param>
+        /// <param name="activationParams">The activation parameters of the identity.</param>
+        /// <param name="activateExpireTime">Timestamp used to determine if a registration session is still active.</param>
+        public Identity(IdentityInfo info, IdentityActivationParams activationParams, Int64 activateExpireTime)
+            : this(info.Id, info.DeviceName, activationParams.MPinIdHash, activationParams.ActivateKey, activateExpireTime)
+        {
         }
         #endregion
 
@@ -36,21 +47,12 @@ namespace Miracl
         public IdentityInfo Info { get; private set; }
 
         /// <summary>
-        /// Gets the hash of the M-PIN id.
+        /// Gets the activation parameters.
         /// </summary>
         /// <value>
-        /// The hash of the M-PIN id.
+        /// The activation parameters.
         /// </value>
-        [JsonProperty("hashMPinID")]
-        public string MPinIdHash { get; private set; }
-
-        /// <summary>
-        /// Gets the activate key.
-        /// </summary>
-        /// <value>
-        /// The activate key.
-        /// </value>
-        public string ActivateKey { get; private set; }
+        public IdentityActivationParams ActivationParams { get; private set; }
 
         /// <summary>
         /// Gets the expire time.
@@ -72,7 +74,7 @@ namespace Miracl
         public bool IsEmpty()
         {
             return string.IsNullOrEmpty(this.Info?.Id) && string.IsNullOrEmpty(this.Info?.DeviceName) &&
-                string.IsNullOrEmpty(this.MPinIdHash) && string.IsNullOrEmpty(this.ActivateKey) && this.ActivateExpireTime == 0;
+                string.IsNullOrEmpty(this.ActivationParams?.MPinIdHash) && string.IsNullOrEmpty(this.ActivationParams?.ActivateKey) && this.ActivateExpireTime == 0;
         }
 
         /// <summary>

@@ -33,7 +33,10 @@ namespace Miracl
 
         private OpenIdConnectMessage TokenEndpointResponse;
         private JwtSecurityToken IdTokenEndpointJwt;
-        private ClaimsPrincipal TokenEndpointUser;        
+        private ClaimsPrincipal TokenEndpointUser;
+        // There could be more than one auth started at a time with the same client, 
+        // so save the auth data on auth start and delete it when auth happens 
+        internal Dictionary<string, string> AuthData = new Dictionary<string, string>();
         #endregion
 
         #region C'tor
@@ -150,7 +153,7 @@ namespace Miracl
             this.Options = options ?? this.Options;
             if (this.Options == null)
             {
-                throw new ArgumentNullException("options", "MiraclOptions should be set!");
+                throw new ArgumentNullException(nameof(options), "MiraclOptions should be set!");
             }
 
             await LoadOpenIdConnectConfigurationAsync();
@@ -189,7 +192,7 @@ namespace Miracl
         {
             if (requestQuery == null)
             {
-                throw new ArgumentNullException("requestQuery");
+                throw new ArgumentNullException(nameof(requestQuery));
             }
 
             if (Options == null)
@@ -199,7 +202,15 @@ namespace Miracl
 
             OpenIdConnectMessage authorizationResponse = new OpenIdConnectMessage(requestQuery.Select(pair => new KeyValuePair<string, string[]>(pair.Key, pair.Value)));
             AuthenticationProperties properties = ValidateAndFillResponseProperties(authorizationResponse);
-            return properties == null ? null : await ValidateAuthorizationCodeAsync(authorizationResponse.Code, string.Empty, redirectUri, properties);
+
+            if (properties == null)
+            {
+                return null;
+            }
+
+            var p = await ValidateAuthorizationCodeAsync(authorizationResponse.Code, string.Empty, redirectUri, properties);
+            this.AuthData.Remove(this.UserState);
+            return p;
         }
 
         /// <summary>
@@ -223,7 +234,7 @@ namespace Miracl
         {
             if (this.Options == null)
             {
-                throw new ArgumentNullException("MiraclOptions should be set!");
+                throw new ArgumentNullException(nameof(this.Options), "MiraclOptions should be set!");
             }
 
             this.TokenEndpointResponse = await RedeemAuthorizationCodeAsync(code, redirectUri);
@@ -255,7 +266,7 @@ namespace Miracl
         {
             if (this.Options == null)
             {
-                throw new ArgumentNullException("MiraclOptions should be set!");
+                throw new ArgumentNullException(nameof(this.Options), "MiraclOptions should be set!");
             }
 
             if (this.TokenEndpointUser == null || this.TokenEndpointUser.Identity == null)
@@ -305,6 +316,7 @@ namespace Miracl
                 this.UserState = null;
                 this.Nonce = null;
                 this.Options = null;
+                this.AuthData.Clear();
             }
 
             this.CallbackUrl = null;
@@ -461,16 +473,23 @@ namespace Miracl
         /// <summary>
         /// Activates an identity to the Platform.
         /// </summary>
-        /// <param name="hashMPinId">The hash of the M-PIN id of the registering identity.</param>
-        /// <param name="activateKey">The activate key of the identity.</param>
-        /// <returns>The status code of the response from the Platform when activating the identity.</returns>
-        public async Task<HttpStatusCode> ActivateIdentityAsync(string hashMPinId, string activateKey)
+        /// <param name="activationParams">The activation parameters.</param>
+        /// <returns>
+        /// The status code of the response from the Platform when activating the identity.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">activationParams</exception>
+        public async Task<HttpStatusCode> ActivateIdentityAsync(IdentityActivationParams activationParams)
         {
+            if (activationParams == null)
+            {
+                throw new ArgumentNullException(nameof(activationParams));
+            }
+
             var httpClient = this.Options.BackchannelHttpHandler != null
                 ? new HttpClient(this.Options.BackchannelHttpHandler)
                 : new HttpClient();
 
-            var postData = JsonConvert.SerializeObject(new { hashMPinId = hashMPinId, activateKey = activateKey });
+            var postData = JsonConvert.SerializeObject(new { hashMPinId = activationParams.MPinIdHash, activateKey = activationParams.ActivateKey });
             var content = new StringContent(postData, Encoding.UTF8, "application/json");
 
             var response = await httpClient.PostAsync(this.Options.Authority + Constants.ActivateEndpoint, content);
@@ -492,17 +511,24 @@ namespace Miracl
         /// <summary>
         /// Gets the identity information.
         /// </summary>
-        /// <param name="hashMPinId">The hash of the M-PIN id.</param>
-        /// <param name="activateKey">The activate key of the identity.</param>
-        /// <returns>An instance of the <see cref="IdentityInfo"/> class.</returns>
-        /// <exception cref="System.ArgumentException">Invalid response</exception>
-        public async Task<IdentityInfo> GetIdentityInfoAsync(string hashMPinId, string activateKey)
+        /// <param name="activationParams">The activation parameters.</param>
+        /// <returns>
+        /// An instance of the <see cref="IdentityInfo" /> class.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">activationParams</exception>
+        /// <exception cref="ArgumentException">Invalid response.</exception>
+        public async Task<IdentityInfo> GetIdentityInfoAsync(IdentityActivationParams activationParams)
         {
+            if (activationParams == null)
+            {
+                throw new ArgumentNullException(nameof(activationParams));
+            }
+
             var httpClient = this.Options.BackchannelHttpHandler != null
                ? new HttpClient(this.Options.BackchannelHttpHandler)
                : new HttpClient();
 
-            var postData = JsonConvert.SerializeObject(new { hashMPinId = hashMPinId, activateKey = activateKey });
+            var postData = JsonConvert.SerializeObject(new { hashMPinId = activationParams.MPinIdHash, activateKey = activationParams.ActivateKey });
             var content = new StringContent(postData, Encoding.UTF8, "application/json");
 
             var response = await httpClient.PostAsync(this.Options.Authority + Constants.GetIdentityInfoEndpoint, content);
@@ -524,6 +550,24 @@ namespace Miracl
 
             return new IdentityInfo(userId, deviceName);
         }
+
+        /// <summary>
+        /// Parses the query string for the custom email verification.
+        /// </summary>
+        /// <param name="queryString">The query string.</param>
+        /// <returns>An instance of the <see cref="IdentityActivationParams" /> class or null.</returns>
+        public IdentityActivationParams ParseCustomEmailQueryString(IQueryCollection queryString)
+        {
+            if (queryString == null || string.IsNullOrEmpty(queryString["i"]) || string.IsNullOrEmpty(queryString["s"]))
+            {
+                return null;
+            }
+
+            var activateKey = queryString["s"];
+            var hashMPinId = queryString["i"];
+
+            return new IdentityActivationParams(hashMPinId, activateKey);
+        }
         #endregion
 
         #region Private
@@ -544,6 +588,7 @@ namespace Miracl
                 this.Nonce = Options.ProtocolValidator.GenerateNonce();
             }
             this.UserState = userStateString ?? Guid.NewGuid().ToString("N");
+            this.AuthData.Add(this.UserState, this.Nonce);
             var message = new OpenIdConnectMessage
             {
                 ClientId = Options.ClientId,
@@ -738,10 +783,13 @@ namespace Miracl
                     string.Format("requestQuery does not have the proper \"{0}\" and \"{1}\" parameteres.", Constants.Code, Constants.State), "requestQuery");
             }
 
-            if (!this.UserState.Equals(returnedState, StringComparison.Ordinal))
+            if (!this.AuthData.Keys.Any(k => k.Equals(returnedState, StringComparison.Ordinal)))
             {
                 throw new ArgumentException("Invalid state!");
             }
+
+            this.UserState = returnedState;
+            this.Nonce = this.AuthData[returnedState];
 
             PopulateSessionProperties(authorizationResponse, properties);
 
@@ -866,7 +914,7 @@ namespace Miracl
         {
             if (signature == null)
             {
-                throw new ArgumentNullException("signature", "Signature cannot be null.");
+                throw new ArgumentNullException(nameof(signature), "Signature cannot be null.");
             }
 
             if (ts < 0)
@@ -996,13 +1044,13 @@ namespace Miracl
             if (this.Options == null || this.Options.DvsConfiguration == null ||
                 this.Options.DvsConfiguration.AdditionalData.Count() != 1)
             {
-                throw new ArgumentNullException("Invalid dvs key!");
+                throw new ArgumentException("Invalid dvs key!");
             }
 
             JArray keyParams = this.Options.DvsConfiguration.AdditionalData.First().Value as JArray;
             if (keyParams == null || keyParams.Count() != 1)
             {
-                throw new ArgumentNullException("Invalid dvs key!");
+                throw new ArgumentException("Invalid dvs key!");
             }
 
             string id = string.Empty;
