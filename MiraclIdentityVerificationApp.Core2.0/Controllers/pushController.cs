@@ -20,10 +20,10 @@ namespace MiraclIdentityVerificationApp.Controllers
 
         [HttpPost]
         [ActionName("Index")]
-        public ActionResult IndexPost()
+        public async Task<ActionResult> IndexPost()
         {
             var newUserJson = new System.IO.StreamReader(Request.Body).ReadToEnd();
-            var identity = HomeController.Client?.HandleNewIdentityPush(newUserJson);
+            var identity = await HomeController.Client?.HandleNewIdentityPushAsync(newUserJson);
 
             if (identity != null && !identity.IsExpired())
             {

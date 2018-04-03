@@ -725,12 +725,12 @@ namespace MiraclAuthenticationTests
 
         #region PV
         [Test]
-        public void Test_HandleNewIdentityPush()
+        public void Test_HandleNewIdentityPushAsync()
         {
             var client = InitClient();
             client.Options.CustomerId = ValidCustomerId;
 
-            var identity = client.HandleNewIdentityPush("{\"new_user_token\":\"" + NewUserToken + "\"}");
+            var identity = client.HandleNewIdentityPushAsync("{\"new_user_token\":\"" + NewUserToken + "\"}").Result;
 
             Assert.That(identity, Is.Not.Null);
             Assert.That(identity.Info, Is.Not.Null);
@@ -743,31 +743,31 @@ namespace MiraclAuthenticationTests
         }
 
         [Test]
-        public void Test_HandleNewIdentityPush_NullJson()
+        public void Test_HandleNewIdentityPushAsync_NullJson()
         {
             var client = new MiraclClient();
 
-            Assert.That(() => client.HandleNewIdentityPush(null),
+            Assert.That(() => client.HandleNewIdentityPushAsync(null),
                Throws.TypeOf<ArgumentNullException>());
         }
 
         [TestCase("")]
         [TestCase("invalid json")]
         [TestCase("{invalid json}")]
-        public void Test_HandleNewIdentityPush_InvalidNewUserJson(string newUserJson)
+        public void Test_HandleNewIdentityPushAsync_InvalidNewUserJson(string newUserJson)
         {
             var client = new MiraclClient();
 
-            Assert.That(() => client.HandleNewIdentityPush(newUserJson),
+            Assert.That(() => client.HandleNewIdentityPushAsync(newUserJson),
                Throws.TypeOf<Newtonsoft.Json.JsonReaderException>());
         }
 
         [Test]
-        public void Test_HandleNewIdentityPush_MissingNewUserTokenInJson()
+        public void Test_HandleNewIdentityPushAsync_MissingNewUserTokenInJson()
         {
             var client = new MiraclClient();
 
-            Assert.That(() => client.HandleNewIdentityPush("{\"token\": \"token_value\"}"),
+            Assert.That(() => client.HandleNewIdentityPushAsync("{\"token\": \"token_value\"}"),
                Throws.TypeOf<ArgumentException>().And.Message.EqualTo("No `new_user_token` in the JSON input."));
         }
 

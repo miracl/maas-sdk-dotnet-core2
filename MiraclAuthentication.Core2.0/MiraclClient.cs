@@ -240,7 +240,8 @@ namespace Miracl
             this.TokenEndpointResponse = await RedeemAuthorizationCodeAsync(code, redirectUri);
             properties = properties ?? new AuthenticationProperties();
 
-            if (!IsResponseValid(properties, userId))
+            var isRespValid = await IsResponseValidAsync(properties, userId);
+            if (!isRespValid)
             {
                 return null;
             }
@@ -409,7 +410,7 @@ namespace Miracl
         /// or
         /// Invalid response
         /// </exception>
-        public Identity HandleNewIdentityPush(string newUserJson)
+        public async Task<Identity> HandleNewIdentityPushAsync(string newUserJson)
         {
             var newUserToken = JObject.Parse(newUserJson).TryGetValue("new_user_token", out JToken value) ? value.ToString() : null;
             if (newUserToken == null)
@@ -417,8 +418,8 @@ namespace Miracl
                 throw new ArgumentException("No `new_user_token` in the JSON input.");
             }
 
-            var claims = ValidateToken(newUserToken, this.Options.CustomerId, out SecurityToken token).Claims;
-            var userData = claims.FirstOrDefault(c => c.Type.Equals("events"));
+            var principal = await ValidateTokenAsync(newUserToken, this.Options.CustomerId);
+            var userData = principal.Claims.FirstOrDefault(c => c.Type.Equals("events"));
             if (userData == null)
             {
                 throw new ArgumentException("Invalid response.");
@@ -628,7 +629,7 @@ namespace Miracl
 
             if (this.Options != null && this.Options.Configuration == null && this.Options.ConfigurationManager != null)
             {
-                this.Options.Configuration = await this.Options.ConfigurationManager.GetConfigurationAsync(CancellationToken.None);
+                await UpdateDiscoveryConfigurationAsync();
             }
 
             if (this.Options != null && this.Options.DvsConfiguration == null && this.Options.DvsConfigurationManager != null)
@@ -639,25 +640,19 @@ namespace Miracl
         }
 
         // Note this modifies the properties if Options.UseTokenLifetime
-        private ClaimsPrincipal ValidateIdToken(AuthenticationProperties properties, out JwtSecurityToken jwt)
+        private async Task<ClaimsPrincipal> ValidateIdTokenAsync(AuthenticationProperties properties)
         {
-            var principal = ValidateToken(this.TokenEndpointResponse.IdToken, this.Options.ClientId, out SecurityToken validatedToken);
-
-            jwt = validatedToken as JwtSecurityToken;
-            if (jwt == null)
-            {
-                throw new SecurityTokenException(string.Format(CultureInfo.InvariantCulture, "Validated Security Token is Not Jwt", validatedToken?.GetType()));
-            }
+            var principal = await ValidateTokenAsync(this.TokenEndpointResponse.IdToken, this.Options.ClientId);
 
             if (Options.UseTokenLifetime)
             {
-                var issued = validatedToken.ValidFrom;
+                var issued = this.IdTokenEndpointJwt.ValidFrom;
                 if (issued != DateTime.MinValue)
                 {
                     properties.IssuedUtc = issued;
                 }
 
-                var expires = validatedToken.ValidTo;
+                var expires = this.IdTokenEndpointJwt.ValidTo;
                 if (expires != DateTime.MinValue)
                 {
                     properties.ExpiresUtc = expires;
@@ -809,7 +804,7 @@ namespace Miracl
             }
         }
                 
-        private bool IsResponseValid(AuthenticationProperties properties, string userId)
+        private async Task<bool> IsResponseValidAsync(AuthenticationProperties properties, string userId)
         {
             if (this.TokenEndpointResponse == null || this.TokenEndpointResponse.AccessToken == null || string.IsNullOrEmpty(this.TokenEndpointResponse.IdToken))
             {
@@ -820,8 +815,8 @@ namespace Miracl
             {
                 return false;
             }
-                        
-            this.TokenEndpointUser = ValidateIdToken(properties, out this.IdTokenEndpointJwt);
+
+            this.TokenEndpointUser = await ValidateIdTokenAsync(properties);
 
             var receivedNonce = this.IdTokenEndpointJwt.Payload.Nonce;
             if (receivedNonce != this.Nonce)
@@ -1007,11 +1002,17 @@ namespace Miracl
         }
 
         // by default the token is signed with audience ClientId, but when full custom push identity verification used, the token is signed with CustomId
-        private ClaimsPrincipal ValidateToken(string token, string audience, out SecurityToken validatedToken)
+        private async Task<ClaimsPrincipal> ValidateTokenAsync(string token, string audience)
         {
             if (!Options.SecurityTokenValidator.CanReadToken(token))
             {
                 throw new SecurityTokenException(string.Format(CultureInfo.InvariantCulture, "Unable to read token", token));
+            }
+
+            string kid = GetKey(token);
+            if (!this.Options.Configuration.SigningKeys.Any(key => key.KeyId == kid))
+            {
+                await UpdateDiscoveryConfigurationAsync();
             }
 
             var validationParameters = Options.TokenValidationParameters.Clone();
@@ -1031,12 +1032,47 @@ namespace Miracl
                 }
             }
 
-            var principal = this.Options.SecurityTokenValidator.ValidateToken(token, validationParameters, out validatedToken);
+            var principal = this.Options.SecurityTokenValidator.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
+            SaveValidatedToken(validatedToken, token);
+            
+            return principal;
+        }
+
+        private void SaveValidatedToken(SecurityToken validatedToken, string originalTokenString)
+        {
             if (validatedToken == null)
             {
-                throw new SecurityTokenException(string.Format(CultureInfo.InvariantCulture, "Unable To Validate Token", token));
+                throw new SecurityTokenException(string.Format(CultureInfo.InvariantCulture, "Unable To Validate Token", originalTokenString));
             }
-            return principal;
+
+            var jwt = validatedToken as JwtSecurityToken;
+            if (jwt == null)
+            {
+                throw new SecurityTokenException(string.Format(CultureInfo.InvariantCulture, "Validated Security Token is Not Jwt", validatedToken?.GetType()));
+            }
+
+            this.IdTokenEndpointJwt = jwt;
+        }
+
+        private static string GetKey(string jwt)
+        {
+            string[] parts = jwt.Split('.');
+            if (parts.Length != 3)
+            {
+                // signed JWT should have header, payload and signature part, separated with a dot
+                throw new ArgumentException("Invalid token format.");
+            }
+
+            string header = parts[0];
+            var part = Encoding.UTF8.GetString(Base64UrlEncoder.DecodeBytes(header));
+            var headerData = JObject.Parse(part);
+            return headerData["kid"].ToString();
+        }
+
+        private async Task UpdateDiscoveryConfigurationAsync()
+        {
+            this.Options.ConfigurationManager.RequestRefresh();
+            this.Options.Configuration = await this.Options.ConfigurationManager.GetConfigurationAsync(CancellationToken.None);
         }
 
         internal void ParseSecurityKey()
