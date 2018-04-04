@@ -743,6 +743,27 @@ namespace MiraclAuthenticationTests
         }
 
         [Test]
+        public void Test_HandleNewIdentityPushAsync_MissingKey()
+        {
+            var client = InitClient();
+            client.Options.CustomerId = ValidCustomerId;
+            // remove the key to reproduce key change in the platform
+            client.Options.Configuration.SigningKeys.Remove(client.Options.Configuration.SigningKeys.First(key => key.KeyId == "31-07-2016"));
+            client.Options.ConfigurationManager = GetConfigManager(client);
+
+            var identity = client.HandleNewIdentityPushAsync("{\"new_user_token\":\"" + NewUserToken + "\"}").Result;
+
+            Assert.That(identity, Is.Not.Null);
+            Assert.That(identity.Info, Is.Not.Null);
+            Assert.That(identity.Info.Id, Is.EqualTo("asd@example.com"));
+            Assert.That(identity.Info.DeviceName, Is.EqualTo("Chrome on Windows"));
+            Assert.That(identity.ActivationParams, Is.Not.Null);
+            Assert.That(identity.ActivationParams.MPinIdHash, Is.EqualTo("5931ed4363cbc73c88d6a173bde75546a78f2c16fbe90949a8ebc4e1b1db635f"));
+            Assert.That(identity.ActivationParams.ActivateKey, Is.EqualTo("29b9aea1dd8b42594bd8209e3f497dfa83818fdf8cdd027302f85d6ee7e2160f"));
+            Assert.That(identity.ActivateExpireTime, Is.EqualTo(1512640536));
+        }
+
+        [Test]
         public void Test_HandleNewIdentityPushAsync_NullJson()
         {
             var client = new MiraclClient();
@@ -1129,14 +1150,18 @@ namespace MiraclAuthenticationTests
             return mockHttp;
         }
 
+        private ConfigurationManager<OpenIdConnectConfiguration> GetConfigManager(MiraclClient client)
+        {
+            return new ConfigurationManager<OpenIdConnectConfiguration>(
+                               Endpoint + Constants.DiscoveryPath,
+                                   new OpenIdConnectConfigurationRetriever(),
+                               new HttpClient(AddDiscoveryEndpoint())
+                               );
+        }
+
         private void SetDiscovery(MiraclClient client)
         {
-            var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-                                Endpoint + Constants.DiscoveryPath,
-                                    new OpenIdConnectConfigurationRetriever(),
-                                new HttpClient(AddDiscoveryEndpoint())
-                                );
-
+            var configManager = GetConfigManager(client);
             client.Options.Configuration = configManager.GetConfigurationAsync(CancellationToken.None).Result;
 
             Assert.That(client.Options.Configuration.AuthorizationEndpoint, Is.Not.Null);

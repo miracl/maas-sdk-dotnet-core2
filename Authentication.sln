@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2010
+VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ClientLIbrary", "ClientLIbrary", "{C7123BAC-3BF0-4074-A51D-718E6CC78DF5}"
 EndProject
@@ -22,7 +22,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiraclAuthentication.Core2.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiraclAuthentication.Core2.0.Tests", "MiraclAuthentication.Core2.0.Tests\MiraclAuthentication.Core2.0.Tests.csproj", "{089E036C-B4D7-40C6-B948-F7B4239C2D53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiraclIdentityVerificationApp.Core2.0", "MiraclIdentityVerificationApp.Core2.0\MiraclIdentityVerificationApp.Core2.0.csproj", "{FD069D20-574E-4610-BA1B-6BFAE1985C91}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MiraclIdentityVerificationApp.Core2.0", "MiraclIdentityVerificationApp.Core2.0\MiraclIdentityVerificationApp.Core2.0.csproj", "{FD069D20-574E-4610-BA1B-6BFAE1985C91}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiraclDvsSigningApp.Core2.0", "MiraclDvsSigningApp.Core2.0\MiraclDvsSigningApp.Core2.0.csproj", "{759F49D7-7930-443F-B074-5665DFCE860D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,6 +52,10 @@ Global
 		{FD069D20-574E-4610-BA1B-6BFAE1985C91}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD069D20-574E-4610-BA1B-6BFAE1985C91}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD069D20-574E-4610-BA1B-6BFAE1985C91}.Release|Any CPU.Build.0 = Release|Any CPU
+		{759F49D7-7930-443F-B074-5665DFCE860D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{759F49D7-7930-443F-B074-5665DFCE860D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{759F49D7-7930-443F-B074-5665DFCE860D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{759F49D7-7930-443F-B074-5665DFCE860D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,6 +66,7 @@ Global
 		{4C7A5C60-D510-49B3-9F8E-FAB70FD29507} = {C7123BAC-3BF0-4074-A51D-718E6CC78DF5}
 		{089E036C-B4D7-40C6-B948-F7B4239C2D53} = {C7123BAC-3BF0-4074-A51D-718E6CC78DF5}
 		{FD069D20-574E-4610-BA1B-6BFAE1985C91} = {2D376589-DA29-45E5-8B40-09B3BCC612A5}
+		{759F49D7-7930-443F-B074-5665DFCE860D} = {2D376589-DA29-45E5-8B40-09B3BCC612A5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {64FE994A-BE81-4E3B-88A3-5F1C7F44A23B}
