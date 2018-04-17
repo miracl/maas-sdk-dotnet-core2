@@ -12,6 +12,10 @@ environment:
   COVERALLS_NET_EXE: '%COVERAGE_DIR%\coveralls.net.%COVERALLS_NET_VER%\tools\csmacnz.Coveralls.exe'
   COVERALLS_REPO_TOKEN:
     secure: muIbtrK17bhXin1hpAppBFqV8t1p+oiVGYtH5P/DDcPVadBxnupP1woOBPDifIFF
+  MFA_CLIENT_SECRET:
+    secure: wA4diTt4R8MV83KvKB3yKstc0tSwqDj4GkgGLel0mD5RgLiki3AHGuphsij7DPSM
+  MFA_CLIENT_ID:
+    secure: GBtYioXxsZ8c5J0sgVz+gA==
 
 install:
   - cmd: |
@@ -19,6 +23,12 @@ install:
       nuget install coveralls.net -Version %COVERALLS_NET_VER% -OutputDirectory %COVERAGE_DIR%
 
 before_build:
+  - ps: |
+      cd .\MiraclAuthentication.Core2.0.Tests
+      curl https://github.com/miracl/mfaclient/releases/download/v0.1.0/mfaclient.windows-amd64.tar.gz -O mfaclient.windows-amd64.tar.gz
+      7z x mfaclient.windows-amd64.tar.gz
+      7z x mfaclient.windows-amd64.tar
+      cd .\..
   - cmd: nuget restore
 
 build:
@@ -27,6 +37,6 @@ build:
 
 test_script:
   - cmd: |
-      %OPENCOVER_EXE% -target:dotnet.exe -targetargs:"test -c Release MiraclAuthentication.Core2.0.Tests" -filter:"%COVERAGE_FILTER%" -register:user -oldStyle -output:%COVERAGE_DIR%\coverage.xml
+      %OPENCOVER_EXE% -target:dotnet.exe -targetargs:"test -c Release MiraclAuthentication.Core2.0.Tests" -filter:"%COVERAGE_FILTER%" -register:user -oldStyle -returntargetcode -output:%COVERAGE_DIR%\coverage.xml
       %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths      
       
