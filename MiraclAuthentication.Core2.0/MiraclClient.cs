@@ -401,6 +401,41 @@ namespace Miracl
         }
 
         /// <summary>
+        /// Creates auth token for authentication in front of the DVS service.
+        /// </summary>
+        /// <param name="docHash">The hash of the document.</param>
+        /// <returns>
+        /// Auth token as a base64-encoded string.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">docHash - The hash of the document cannot be null.</exception>
+        /// <exception cref="InvalidOperationException">
+        /// Options cannot be null - client credentials are used for token creation.
+        /// or
+        /// Options.ClientSecret cannot be null.
+        /// </exception>
+        public string DvsCreateAuthToken(string docHash)
+        {
+            if (docHash == null)
+            {
+                throw new ArgumentNullException("docHash", "The hash of the document cannot be null.");
+            }
+
+            if (this.Options == null)
+            {
+                throw new InvalidOperationException("Options cannot be null - client credentials are used for token creation.");
+            }
+
+            if (this.Options.ClientSecret == null)
+            {
+                throw new InvalidOperationException("Options.ClientSecret cannot be null.");
+            }
+
+            string hmac = SignHmacMessage(docHash, this.Options.ClientSecret);
+            string authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", this.Options.ClientId, hmac)));
+            return authToken;
+        }
+
+        /// <summary>
         /// Validates the JSON received from the Platform when Full Custom Verification with Push type is used.
         /// </summary>
         /// <param name="newUserJson">A JSON string containing JWT with the user information which the Platform sends for activation.</param>
@@ -991,6 +1026,18 @@ namespace Miracl
             {
                 rsa.ImportParameters(dvsRsaParameters);
                 return rsa.VerifyData(Encoding.UTF8.GetBytes(parts[0] + '.' + parts[1]), jwtSignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            }
+        }
+
+        private string SignHmacMessage(string msg, string key)
+        {
+            var keyBytes = Encoding.UTF8.GetBytes(key);
+            var msgBytes = Encoding.UTF8.GetBytes(msg);
+
+            using (var hmac = new HMACSHA256(keyBytes))
+            {
+                var hashedBytes = hmac.ComputeHash(msgBytes);
+                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
             }
         }
         #endregion

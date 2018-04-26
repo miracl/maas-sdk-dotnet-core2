@@ -721,6 +721,61 @@ namespace MiraclAuthenticationTests
 
             Assert.AreEqual(expected, new MiraclClient().DvsCreateDocumentHash(document));
         }
+
+        [Test]
+        public void Test_DvsCreateAuthToken()
+        {
+            string docHash = "1789c9eeee7dcbf9a5e9b47374e244f85263dc45922a249d37f7ba9fd4efb850";
+            string clientId = "MockClientId";
+            string clientSecret = "MockClientSecret";
+
+            MiraclOptions options = new MiraclOptions
+            {
+                ClientId = clientId,
+                ClientSecret = clientSecret
+            };
+
+            MiraclClient client = new MiraclClient(options);
+            string expected = "TW9ja0NsaWVudElkOmU1M2U4ZTY2NGM0NWJlMzQyZWZjZmExNDZlNTM4ODc3ZGYyYWQ2NDViNGExYTA1OWIxNmY5NTBkMzhhZGUzYzU=";
+
+            Assert.AreEqual(expected, client.DvsCreateAuthToken(docHash));
+        }
+
+        [Test]
+        public void Test_DvsCreateAuthToken_NullDocHash()
+        {
+            MiraclClient client = new MiraclClient();
+
+            Assert.That(() => client.DvsCreateAuthToken(null),
+              Throws.TypeOf<ArgumentNullException>().And.Message.Contains("The hash of the document cannot be null."));
+        }
+
+        [Test]
+        public void Test_DvsCreateAuthToken_NullClientOptions()
+        {
+            MiraclClient client = new MiraclClient();
+
+            Assert.That(() => client.DvsCreateAuthToken("docHash"),
+              Throws.TypeOf<InvalidOperationException>().And.Message.Contains("Options cannot be null - client credentials are used for token creation."));
+        }
+
+        [Test]
+        public void Test_DvsCreateAuthToken_NullClientSecret()
+        {
+            string clientId = "MockClientId";
+            string clientSecret = null;
+
+            MiraclOptions options = new MiraclOptions
+            {
+                ClientId = clientId,
+                ClientSecret = clientSecret
+            };
+
+            MiraclClient client = new MiraclClient(options);
+
+            Assert.That(() => client.DvsCreateAuthToken("dockHash"),
+              Throws.TypeOf<InvalidOperationException>().And.Message.Contains("Options.ClientSecret cannot be null."));
+        }
         #endregion
 
         #region PV

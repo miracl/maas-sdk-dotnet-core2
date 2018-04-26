@@ -55,7 +55,10 @@ namespace MiraclDvsSigningApp.Controllers
         {
             var docHash = HomeController.Client.DvsCreateDocumentHash(document);
             var timeStamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
-            var documentData = new { hash = docHash, timestamp = timeStamp };
+            
+            // the mfa.js uses the authToken to verify the validity of the provided PIN
+            var authToken = HomeController.Client.DvsCreateAuthToken(docHash);
+            var documentData = new { hash = docHash, timestamp = timeStamp, authToken };
 
             return Json(documentData);
         }
