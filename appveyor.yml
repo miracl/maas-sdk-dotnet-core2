@@ -25,15 +25,14 @@ install:
 before_build:
   - ps: |
       cd .\MiraclAuthentication.Core2.0.Tests
-      curl https://github.com/miracl/mfaclient/releases/download/v0.1.0/mfaclient.windows-amd64.tar.gz -O mfaclient.windows-amd64.tar.gz
+      curl https://github.com/miracl/mfaclient/releases/download/v0.4.1/mfaclient.windows-amd64.tar.gz -O mfaclient.windows-amd64.tar.gz
       7z x mfaclient.windows-amd64.tar.gz
       7z x mfaclient.windows-amd64.tar
       cd .\..
-  - cmd: nuget restore
+  - cmd: nuget restore Authentication.sln -Verbosity quiet
 
-build:
-  project: Authentication.sln
-  verbosity: minimal
+build_script:
+  cmd: msbuild /m /verbosity:minimal Authentication.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 test_script:
   - cmd: |
