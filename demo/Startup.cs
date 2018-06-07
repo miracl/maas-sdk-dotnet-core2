@@ -25,8 +25,6 @@ namespace demo
                     ClientId = Environment.GetEnvironmentVariable("MFA_CLIENT_ID"),
                     ClientSecret = Environment.GetEnvironmentVariable("MFA_CLIENT_SECRET"),
                     SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme,
-                    // I'll leave this one here for now as a reminder for the system time "feature" of the windows containers
-                    // TokenValidationParameters = new TokenValidationParameters { ValidateLifetime = false }, // not checking token lifetime for now, because windows containers have messed up system time
                     SaveTokens = true
                 };
 
@@ -66,6 +64,11 @@ namespace demo
 
             app.UseMvc(routes =>
             {
+                routes.MapRoute(
+                    "DVS verify signature",                                           
+                    "verify/",                            
+                    new { controller = "dvs", action = "VerifySignature" });
+
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
