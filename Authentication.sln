@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ClientLIbrary", "ClientLIbrary", "{C7123BAC-3BF0-4074-A51D-718E6CC78DF5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ClientLibrary", "ClientLibrary", "{C7123BAC-3BF0-4074-A51D-718E6CC78DF5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{2D376589-DA29-45E5-8B40-09B3BCC612A5}"
 EndProject

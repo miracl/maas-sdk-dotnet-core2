@@ -17,6 +17,10 @@ environment:
   MFA_CLIENT_ID:
     secure: GBtYioXxsZ8c5J0sgVz+gA==
 
+init:
+  - rmdir C:\cygwin /s /q
+  - rmdir C:\QT /s /q
+
 install:
   - cmd: |
       nuget install OpenCover -Version %OPENCOVER_VER% -OutputDirectory %COVERAGE_DIR%
@@ -25,18 +29,25 @@ install:
 before_build:
   - ps: |
       cd .\MiraclAuthentication.Core2.0.Tests
-      curl https://github.com/miracl/mfaclient/releases/download/v0.1.0/mfaclient.windows-amd64.tar.gz -O mfaclient.windows-amd64.tar.gz
+      curl https://github.com/miracl/mfaclient/releases/download/v0.4.1/mfaclient.windows-amd64.tar.gz -O mfaclient.windows-amd64.tar.gz
       7z x mfaclient.windows-amd64.tar.gz
       7z x mfaclient.windows-amd64.tar
       cd .\..
-  - cmd: nuget restore
+  - cmd: nuget restore Authentication.sln -Verbosity quiet
 
-build:
-  project: Authentication.sln
-  verbosity: minimal
+build_script:
+  cmd: msbuild /m /verbosity:minimal Authentication.sln /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 test_script:
   - cmd: |
       %OPENCOVER_EXE% -target:dotnet.exe -targetargs:"test -c Release MiraclAuthentication.Core2.0.Tests" -filter:"%COVERAGE_FILTER%" -register:user -oldStyle -returntargetcode -output:%COVERAGE_DIR%\coverage.xml
-      %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths      
-      
+      %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths
+  - ps: |
+      git clone -q https://github.com/miracl/maas-sdk-integration.git
+      docker build -f maas-sdk-integration/Dockerfile.windows -t test-suite ./maas-sdk-integration
+      docker build -f demo/Dockerfile -t demo .
+      docker-compose -f maas-sdk-integration/docker-compose-windows.yml up -d 2>$null
+      echo "Running integration tests..."
+      $demoURL = "http://$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' maas-sdk-dotnet_demo):8000"
+      docker run --rm -it --network nat test-suite -c "go run cmd/wait-for/main.go -addr $demoURL/config"
+      docker run --rm -it --network nat test-suite -c "go test -tags 'ignoredefaultcurves BN254CX' -v -addr $demoURL -mfa-api https://api.mpin.io"

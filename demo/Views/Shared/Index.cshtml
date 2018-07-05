@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>.NET Core 2.0 SDK example</title>
+    <style type="text/css">
+        html, body {
+            font-family: sans-serif;
+        }
+
+        main {
+            margin: auto;
+            max-width: 920px;
+        }
+
+        h1 {
+            border-bottom: 1px solid #ccc;
+            font-weight: 300;
+            padding-bottom: 0.67em;
+        }
+
+        a, input {
+            border-radius: 4px;
+            display: inline-block;
+            margin: 8px 0;
+            padding: 12px;
+        }
+
+        input[type=email] {
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        a, input[type=submit] {
+            background-color: #0E78B9;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            text-transform: uppercase;
+        }
+
+            a:hover, input[type=submit]:hover {
+                background-color: #1978A0;
+            }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>.NET Core 2.0 SDK example</h1>
+
+        @if (ViewBag.AuthUrl != null)
+        {
+            <form id="login-form" action="@ViewBag.AuthUrl">
+                <input type="email" name="email" placeholder="Email Address">
+                <input type="submit" value="Login">
+            </form>
+
+            <!-- The following script is used to populate prerollid if provided during the authentication process -->
+            <script type="application/javascript">
+                document.getElementById("login-form").addEventListener("submit", function (event) {
+                    event.preventDefault();
+                    var email = new FormData(event.target).get('email');
+                    window.location = email ? event.target.action + '&prerollid=' + email : event.target.action;
+                });
+            </script>
+        }
+        else
+        {
+            <p>
+                Hi, <b>@ViewBag.Client.UserId</b> !
+            </p>
+            <a href="/">Back</a>
+        }
+    </main>
+
+</body>
+
+</html>
