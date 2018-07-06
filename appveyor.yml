@@ -41,7 +41,7 @@ build_script:
 test_script:
   - cmd: |
       %OPENCOVER_EXE% -target:dotnet.exe -targetargs:"test -c Release MiraclAuthentication.Core2.0.Tests" -filter:"%COVERAGE_FILTER%" -register:user -oldStyle -returntargetcode -output:%COVERAGE_DIR%\coverage.xml
-      %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths
+      %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths --jobId %APPVEYOR_BUILD_NUMBER%
   - ps: |
       git clone -q https://github.com/miracl/maas-sdk-integration.git
       docker build -f maas-sdk-integration/Dockerfile.windows -t test-suite ./maas-sdk-integration
