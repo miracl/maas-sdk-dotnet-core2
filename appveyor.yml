@@ -50,4 +50,4 @@ test_script:
       echo "Running integration tests..."
       $demoURL = "http://$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' maas-sdk-dotnet_demo):8000"
       docker run --rm -it --network nat test-suite -c "go run cmd/wait-for/main.go -addr $demoURL/config"
-      docker run --rm -it --network nat test-suite -c "go test -tags 'ignoredefaultcurves BN254CX' -v -addr $demoURL -mfa-api https://api.mpin.io"
+      docker run --rm -it --network nat test-suite -c "go test -tags 'ignoredefaultcurves BN254CX' -v -addr $demoURL -mfa-api https://api.mpin.io -client-secret $env:MFA_CLIENT_SECRET"
