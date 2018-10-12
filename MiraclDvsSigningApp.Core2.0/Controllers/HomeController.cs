@@ -15,22 +15,32 @@ namespace MiraclDvsSigningApp.Controllers
     {
         internal static MiraclClient Client;
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var url = Request.Scheme + "://" + Request.Host.Value;
-            ViewBag.AuthorizationUri = await GetUrl(url);
             return View();
         }
 
-        [HttpPost]
-        public async Task<ActionResult> Index(string Logout)
+        public async Task<ActionResult> Login(string email)
         {
-            if (Logout != null)
+            var url = Request.Scheme + "://" + Request.Host.Value;
+            var authorizationUri = await GetUrl(url);
+
+            // The following code is used to populate prerollid if provided during the authentication process
+            if (!string.IsNullOrEmpty(email))
+            {
+                authorizationUri += "&prerollid=" + email;
+            }
+            return Redirect(authorizationUri);
+        }
+
+        public async Task<ActionResult> Logout()
+        {
+            if (Client != null)
             {
                 Client.ClearUserInfo(false);
-                await Request.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             }
 
+            await Request.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index");
         }
 

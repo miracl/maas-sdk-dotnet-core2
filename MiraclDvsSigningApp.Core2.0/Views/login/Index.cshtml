@@ -37,15 +37,13 @@
     </div>
 </div>
 <hr />
-<div>
-    @using (Html.BeginForm("Index", "Home", FormMethod.Post))
+    <span>If you want to logout, press the button.</span>
+    @using (Html.BeginForm("Logout", "Home", FormMethod.Post))
     {
-        <span>You have been authenticated with identity <b id="userId">@ViewBag.Client.UserId</b> which has the following data.</span>
-        <br />
-        <span>If you want to logout, press the button.</span>
-        <button id="LogoutId" class="btn" name="Logout" value="Logout" type="submit">Logout</button>
+        <button name="LogoutId" class="btn btn-default" type="submit">Logout</button>
     }
-</div>
+    <hr />
+    <span>You have been authenticated with identity <b id="userId">@ViewBag.Client.UserId</b> which has the following data.</span>
 <br />
 <p>
     <strong>Access token:</strong>
@@ -122,7 +120,7 @@
                         hash: documentData.hash,
                         timestamp: documentData.timestamp
                     }, function success(signature) {
-                        console.info("Successful signature:" + signature);
+                        console.info("Successful signature:");
                         $("#signatureData").html(JSON.stringify(signature, null, 4));
                         $("#signature").removeClass("hidden");
 
