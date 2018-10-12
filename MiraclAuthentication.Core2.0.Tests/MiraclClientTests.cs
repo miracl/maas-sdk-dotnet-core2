@@ -42,7 +42,8 @@ namespace MiraclAuthenticationTests
                                                                       "7b226973737565644174223a313439373335363536352c22757365724944223a2273616d75656c652e616e6472656f6c69406578616d706c652e636f6d222c22634944223a22222c226d6f62696c65223a312c2273616c74223a223236343330323663373430363162363162616465643836313262373530626334222c2276223a317d",
                                                                        "041c9e2ae817f033140a2085add0594643ca44381dae76e0241cbf790371a7f3c406b31ba86b3cd0d744f0a2e87dbcc32d19416d15aaae91f9122cb4d12cb78f07",
                                                                        "040ef9b951522009900127820a9a956486b9e11ad05e18e4e86931460d310a2ecf106c9935dc0775a41892577b2f96f87c556dbe87f8fcf7fda546ec21752beada",
-                                                                       "0f9b60020f2a6108c052ba5d2ac0b24b8b7975ae2a2082ddb5d51b236662620e0c05f8310abe5fbda9ed80d638887ed2859f22b9c902bf88bd52dd083ce26e93144e03e61ad2e14722d29e21fde4eaa9f33f793db7da5e3f6211a7d99a8186e023c7fc60de7185a5d73d11b393530d0245256f7ecc0b1c7c96513b1c717a9b1b");
+                                                                       "0f9b60020f2a6108c052ba5d2ac0b24b8b7975ae2a2082ddb5d51b236662620e0c05f8310abe5fbda9ed80d638887ed2859f22b9c902bf88bd52dd083ce26e93144e03e61ad2e14722d29e21fde4eaa9f33f793db7da5e3f6211a7d99a8186e023c7fc60de7185a5d73d11b393530d0245256f7ecc0b1c7c96513b1c717a9b1b", 
+                                                                       "notnull");
         private const string NewUserToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjMxLTA3LTIwMTYifQ.eyJhdWQiOiIzMTE3YmYwNC02NTFhLTQzYmEtYWQzMi0zY2I4NDVmZmZiM2YiLCJldmVudHMiOnsibmV3VXNlciI6eyJ1c2VySUQiOiJhc2RAZXhhbXBsZS5jb20iLCJkZXZpY2VOYW1lIjoiQ2hyb21lIG9uIFdpbmRvd3MiLCJoYXNoTVBpbklEIjoiNTkzMWVkNDM2M2NiYzczYzg4ZDZhMTczYmRlNzU1NDZhNzhmMmMxNmZiZTkwOTQ5YThlYmM0ZTFiMWRiNjM1ZiIsImFjdGl2YXRlS2V5IjoiMjliOWFlYTFkZDhiNDI1OTRiZDgyMDllM2Y0OTdkZmE4MzgxOGZkZjhjZGQwMjczMDJmODVkNmVlN2UyMTYwZiIsImV4cGlyZVRpbWUiOjE1MTI2NDA1MzZ9fSwiZXhwIjoxNTEyNjQwNTM2LCJpYXQiOjE1MTI2MzY5MzYsImlzcyI6Imh0dHBzOi8vYXBpLmRldi5taXJhY2wubmV0Iiwic3ViIjoiYXNkQGV4YW1wbGUuY29tIn0.XYj_LpQdJhnWOOoM-otm71HU21jQ_rQ7MFvwxWlDiNEriBTVBKFuiDs7wbt6Fzg0NnXAmMYSc9mFKVwn0jnJSpPB16N4X8yLOXDY8ugt7sUckrEAdYE9Vd1r-N-YvxU_S3fy2b5Jq2cpAjhlvgm28TApH5uV5YLWRjwiWyVaCo48VZmUafttH6CZLiTru2JUMw5tjrnaDaAOYGCsmXs-QtWPHm307riCH86TG_tuiQdp7HZWOQEUzuQ851WE914qs1xpn8lHYl8N8eMiX79BQTUiMZN5yCzS2FzIjYn1Q-hCe9iIqZY24SNogVQljb3ZUv1TCWtMP02G6KibaR9K9A";
         private const string ValidCustomerId = "3117bf04-651a-43ba-ad32-3cb845fffb3f";
         #endregion
@@ -548,20 +549,21 @@ namespace MiraclAuthenticationTests
             Assert.That(client.Options.DvsConfiguration.SigningKeys.First().KeyId, Is.EqualTo("KeyId"));
         }
 
-        [TestCase("", "s", "d", "d", "b")]
-        [TestCase(null, "s", "d", "d", "b")]
-        [TestCase("2", "", "d", "d", "b")]
-        [TestCase("3", null, "d", "d", "b")]
-        [TestCase("w", "s", "", "d", "b")]
-        [TestCase("w", "s", null, "d", "b")]
-        [TestCase("w", "s", "d", "", "b")]
-        [TestCase("e", "s", "d", null, "b")]
-        [TestCase("s", "s", "d", "d", "")]
-        [TestCase("f", "s", "d", "d", null)]
-        public void Test_Signature(string hash, string u, string v, string publicKey, string mpinId)
+        [TestCase("", "s", "d", "d", "b", null)]
+        [TestCase(null, "s", "d", "d", "b", "")]
+        [TestCase("2", "", "d", "d", "b", "1")]
+        [TestCase("3", null, "d", "d", "b", "d")]
+        [TestCase("w", "s", "", "d", "b", "g")]
+        [TestCase("w", "s", null, "d", "b", "g")]
+        [TestCase("w", "s", "d", "", "b", "g")]
+        [TestCase("e", "s", "d", null, "b", "g")]
+        [TestCase("s", "s", "d", "d", "", "d")]
+        [TestCase("f", "s", "d", "d", null, "2")]
+        [TestCase("f", "s", "d", "d", "d", null)]
+        public void Test_Signature(string hash, string u, string v, string publicKey, string mpinId, string dtas)
         {
             Signature s;
-            Assert.That(() => s = new Signature(hash, mpinId, u, v, publicKey),
+            Assert.That(() => s = new Signature(hash, mpinId, u, v, publicKey, dtas),
                Throws.TypeOf<ArgumentNullException>().And.Message.Contains("Value cannot be null"));
         }
 
@@ -663,7 +665,8 @@ namespace MiraclAuthenticationTests
                                                 "7b226973737565644174223a313439373335363536352c22757365724944223a2273616d75656c652e616e6472656f6c69406578616d706c652e636f6d222c22634944223a22222c226d6f62696c65223a312c2273616c74223a223236343330323663373430363162363162616465643836313262373530626334222c2276223a317d",
                                                 "041c9e2ae817f033140a2085add0594643ca44381dae76e0241cbf790371a7f3c406b31ba86b3cd0d744f0a2e87dbcc32d19416d15aaae91f9122cb4d12cb78f07",
                                                 "040ef9b951522009900127820a9a956486b9e11ad05e18e4e86931460d310a2ecf106c9935dc0775a41892577b2f96f87c556dbe87f8fcf7fda546ec21752beada",
-                                                "0f9b60020f2a6108c052ba5d2ac0b24b8b7975ae2a2082ddb5d51b236662620e0c05f8310abe5fbda9ed80d638887ed2859f22b9c902bf88bd52dd083ce26e93144e03e61ad2e14722d29e21fde4eaa9f33f793db7da5e3f6211a7d99a8186e023c7fc60de7185a5d73d11b393530d0245256f7ecc0b1c7c96513b1c717a9b1b");
+                                                "0f9b60020f2a6108c052ba5d2ac0b24b8b7975ae2a2082ddb5d51b236662620e0c05f8310abe5fbda9ed80d638887ed2859f22b9c902bf88bd52dd083ce26e93144e03e61ad2e14722d29e21fde4eaa9f33f793db7da5e3f6211a7d99a8186e023c7fc60de7185a5d73d11b393530d0245256f7ecc0b1c7c96513b1c717a9b1b",
+                                                "WyIwZmE0NzBhNDA4Yjg3Y2M3MWU5MzdmNDQxYjAxOTg5NTU3OTQxZWMwZGIzOTE2MWRjN2JiMDg2MGJkZjk5MTEzIiwiOTRmNDkzYmViYmZmMWM0ZmU0ZDg3NmE2YTdiZjM1NzRkMjg5YmIzMzRmYjViYTczMWM0MDliYTI2ZThiNjNmNyJd");
 
             Assert.That(() => client.DvsVerifySignatureAsync(signature, 0),
                Throws.TypeOf<ArgumentException>().And.Message.Contains("Signature hash and response hash do not match"));
@@ -1264,7 +1267,7 @@ namespace MiraclAuthenticationTests
             var options = new MiraclOptions();
             options.ClientId = clientId;
             options.ClientSecret = clientSecret;
-            options.BackchannelHttpHandler = mockHttp; 
+            options.BackchannelHttpHandler = mockHttp;
             options.BackchannelTimeout = TimeSpan.FromMinutes(1);
             options.CallbackPath = new PathString("/login");
             options.Authority = Endpoint;

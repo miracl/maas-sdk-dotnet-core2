@@ -15,6 +15,9 @@
         <a class="btn btn-primary" onclick="dvsRegister()">DVS register</a>
     </div>
     <div id="dvsSign" class="hidden">
+        <a class="btn btn-danger" onclick="dvsRemoveIdentity()">Remove signing identity</a>
+        <br />
+        <br />
         <label for="doc">Enter text to be signed: </label>
         <br />
         <textarea id="doc" style="margin-bottom:10px; margin-top:5px" rows="4" cols="50"></textarea>
@@ -58,69 +61,33 @@
 }
 
 @section scripts{
-    <script src="http://cdn.miracl.net/mfa-client-js/latest/mfa.js"></script>
+    <link rel="stylesheet" type="text/css" href="http://cdn.miracl.net/dvs/0.1.1/css/dvs.css" media="screen" />
+    <script src="http://cdn.miracl.net/dvs/0.1.1/dvs.client.min.js"></script>
     <script>
         var userId = "@ViewBag.Client.UserId";
-        var accessToken = "@ViewBag.AccessToken";
 
-        function getLocalEntropy() {
-            var crypto,
-                buffer,
-                entropyHex,
-                i;
-
-            if (typeof window !== "undefined") {
-                crypto = window.crypto || window.msCrypto;
-            }
-
-            if (typeof crypto === "undefined") {
-                return "";
-            }
-
-            buffer = new Uint32Array(8);
-            crypto.getRandomValues(buffer);
-
-            entropyHex = "";
-            for (i = 0; i < buffer.length; i++) {
-                entropyHex = entropyHex + buffer[i].toString(16);
-            }
-
-            return entropyHex;
-        }
-
-        function isRegistered(userId) {
-            return mfa.users.exists(userId) && mfa.users.get(userId, "state") === mfa.users.states.register;
-        }
-
-        var mfa = new Mfa({
+        var dvs = new DVS({
+            userId: userId,
             server: "@ViewBag.Client.Options.Authority",
-            customerId: "@ViewBag.Client.Options.CustomerId",
-            seed: getLocalEntropy(),
-            clientId: "@ViewBag.Client.Options.ClientId"
+            clientId: "@ViewBag.Client.Options.ClientId",
+            redirectURI: "@ViewBag.RedirectUri",
+            pinPolicy: "different"
         });
 
-        if (isRegistered(userId)) {
-            $("#dvsRegister").addClass("hidden");
-            $("#dvsSign").removeClass("hidden");
+        dvs.init(function () {
+            dvs.hasIdentity(function success() {
+                $("#dvsRegister").addClass("hidden");
+                $("#dvsSign").removeClass("hidden");
 
-            var element = $("#dvsRegisterResponse > span");
-            element.removeClass("text-danger");
-            element.html("An identity <b>@ViewBag.Client.UserId</b> has been registered for DVS. Now you can sign documents with it.");
-        }
+                var element = $("#dvsRegisterResponse > span");
+                element.removeClass("text-danger");
+                element.html("An identity <b>@ViewBag.Client.UserId</b> has been registered for DVS. Now you can sign documents with it.");
+            }, function fail() {
+                console.log("Not registered");
+            });
+        });
 
         function dvsRegister() {
-            if (!isRegistered(userId)) {
-                var pinValue;
-                var isPinValid = false;
-                while (!isPinValid) {
-                    pinValue = prompt("Please, set up PIN (accepts only 4 digits)");
-                    if (pinValue === null) {
-                        return;
-                    }
-
-                    isPinValid = /^\d{4}$/.test(pinValue);
-                }
-
                 var successCb = function () {
                     var element = $("#dvsRegisterResponse > span");
                     element.removeClass("text-danger");
@@ -137,73 +104,58 @@
                     console.log(error);
                 };
 
-                var pinCb = function (passPin) {
-                    passPin(pinValue);
-                };
-
-                mfa.registerDvs(userId, accessToken, pinCb, successCb, errorCb);
-            } else {
-                $("#dvsRegister").addClass("hidden");
-                $("#dvsSign").removeClass("hidden");
-            }
+                dvs.createIdentity(successCb, errorCb);
         }
 
         function dvsSign(doc) {
-            var pinValue;
-            var isPinValid = false;
-            while (!isPinValid) {
-                pinValue = prompt("Please, enter PIN (accepts only 4 digits)");
-                if (pinValue === null) {
-                    return;
-                }
-
-                isPinValid = /^\d{4}$/.test(pinValue);
-            }
-
             $("#verificationResult").addClass("hidden");
 
-            if (isRegistered(userId)) {
-                $.ajax({
-                    url: "@Url.Action("CreateDocumentHash", "login")",
-                    type: "POST",
-                    data: { document: doc },
-                    dataType: "json",
-                    cache: false,
-                    success: function (documentData) {
-                        try {
-                            var s = mfa.signMessage(userId, pinValue, documentData.hash, documentData.timestamp);
+            $.ajax({
+                url: "@Url.Action("CreateDocumentHash", "login")",
+                type: "POST",
+                data: { document: doc },
+                dataType: "json",
+                cache: false,
+                success: function (documentData) {
+                    dvs.sign({
+                        doc: doc,
+                        hash: documentData.hash,
+                        timestamp: documentData.timestamp
+                    }, function success(signature) {
+                        console.info("Successful signature:" + signature);
+                        $("#signatureData").html(JSON.stringify(signature, null, 4));
+                        $("#signature").removeClass("hidden");
 
-                            var signature = {
-                                mpinId: mfa.users.get(userId, "mpinId"),
-                                publicKey: mfa.users.get(userId, "publicKey"),
-                                u: s.U,
-                                v: s.V,
-                                hash: documentData.hash,
-                                timestamp: documentData.timestamp
-                            };
-
-                            $("#signatureData").html(JSON.stringify(signature, null, 4));
-                            $("#signature").removeClass("hidden");
-                        } catch (err) {
-                            alert(err);
-                        }
-                    }
-                })
-            }
+                        dvsVerifySignature(JSON.stringify(signature));
+                    }, function fail(error) {
+                        console.error(error);
+                    });
+                }
+            });
         }
 
         function dvsVerifySignature(signature) {
             $.ajax({
-                    url: "@Url.Action("VerifySignature", "login")",
-                    type: "POST",
-                    data: { verificationData: signature },
-                    dataType: "json",
-                    cache: false,
-                    success: function (res) {
-                        $("#verificationResult").removeClass("hidden");
-                        $("#verificationResult > pre").html(JSON.stringify(res, null, 4));
-                    }
-                })
+                url: "@Url.Action("VerifySignature", "login")",
+                type: "POST",
+                data: { verificationData: signature },
+                dataType: "json",
+                cache: false,
+                success: function (res) {
+                    $("#verificationResult").removeClass("hidden");
+                    $("#verificationResult > pre").html(JSON.stringify(res, null, 4));
+                }
+            });
+        }
+
+        function dvsRemoveIdentity() {
+            dvs.deleteIdentity(function () {
+                console.info("Deleted identity");
+                $("#dvsRegister").removeClass("hidden");
+                $("#dvsSign").addClass("hidden");
+            }, function () {
+                console.error("Error while deleting identity");
+            });
         }
     </script>
 }

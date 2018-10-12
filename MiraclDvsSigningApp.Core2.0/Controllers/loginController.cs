@@ -45,8 +45,9 @@ namespace MiraclDvsSigningApp.Controllers
             {
                 return View("Error");
             }
-
+            
             ViewBag.Client = HomeController.Client;
+            ViewBag.RedirectUri = Request.Scheme + "://" + Request.Host.Value + HomeController.Client.Options.CallbackPath;
             return View();
         }
 
@@ -74,8 +75,9 @@ namespace MiraclDvsSigningApp.Controllers
             var v = data.TryGetValue("v", out JToken vValue) ? vValue.ToString() : null;
             var docHash = data.TryGetValue("hash", out JToken docHashValue) ? docHashValue.ToString() : null;
             var ts = data.TryGetValue("timestamp", out JToken tsValue) ? tsValue.ToString() : null;
-
-            var signature = new Signature(docHash, mPinId, u, v, publicKey);
+            var dtas = data.TryGetValue("dtas", out JToken dtasValue) ? dtasValue.ToString() : null;
+            
+            var signature = new Signature(docHash, mPinId, u, v, publicKey, dtas);
             var timeStamp = int.TryParse(ts, out int timeStampValue) ? timeStampValue : 0;
             var verificationResult = await HomeController.Client.DvsVerifySignatureAsync(signature, timeStamp);
 
