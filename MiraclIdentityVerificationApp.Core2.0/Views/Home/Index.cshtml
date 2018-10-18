@@ -7,74 +7,78 @@
 <div class="row">
     <div class="col-md-8">
         @switch ((string)ViewBag.VerificationFlow)
-            {
-                case "StandardEmail":
+        {
+            case "StandardEmail":
                 <text>
-                <h3>Standard Flow Steps</h3>
-                <br />
-                Click the login button.<br />
-                Choose browser or QR code login and follow the description for creating a new identity.
-                <br /><br />
+                    <h3>Standard Flow Steps</h3>
+                    <br />
+                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code> "Standard Email". <br /><br />
+                    Click the login button.<br />
+                    Choose browser or QR code login and follow the description for creating a new identity.
+                    <br /><br />
                 </text>
                 break;
             case "CustomEmail":
                 <text>
-                <h3>Custom Email Flow Steps</h3><br />
-                Click the login button. <br />
-                Choose browser or QR code login and enter your new identity. <br />
-                Open the link from the received email to verify your identity. <br />
-                The <code>customEmailController</code> takes care of activating the identity (in this sample, we activate every not expired identity). <br />
-                After the identity is activated, the registration flow asks you to setup a PIN for it.  <br /><br />
+                    <h3>Custom Email Flow Steps</h3><br />
+                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code> "Custom Email". <br /><br />
+                    Click the login button. <br />
+                    Choose browser or QR code login and enter your new identity. <br />
+                    Open the link from the received email to verify your identity. <br />
+                    The <code>customEmailController</code> takes care of activating the identity (in this sample, we activate every not expired identity). <br />
+                    After the identity is activated, the registration flow asks you to setup a PIN for it.  <br /><br />
                 </text>
                 break;
             case "FullCustomPull":
                 <text>
-                <h3>Full Custom Pull Flow Steps</h3><br />
-                Navigate to <code>@Html.ActionLink("pullController", "Index", "pull", null, new { target = "_blank" })</code> for further use.<br />
-                Click the Login button and use the browser login or scan the QR code.<br />
-                Enter the email address to start a new identity registration and click Create Identity button.<br />
-                Navigate back to <code>@Html.ActionLink("pullController", "Index", "pull", null, new { target = "_blank" })</code> and verify the identity.<br />
-                Navigate back to Platform registration page to continue the identity registration and setup the identity PIN.<br /><br />
+                    <h3>Full Custom Pull Flow Steps</h3><br />
+                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code> "Fully Custom" with <code>New User Notification Type</code> "Pull". <br /><br />
+                    Navigate to <code>@Html.ActionLink("pullController", "Index", "pull", null, new { target = "_blank" })</code> for further use.<br />
+                    Click the Login button and use the browser login or scan the QR code.<br />
+                    Enter the email address to start a new identity registration and click Create Identity button.<br />
+                    Navigate back to <code>@Html.ActionLink("pullController", "Index", "pull", null, new { target = "_blank" })</code> and verify the identity.<br />
+                    Navigate back to Platform registration page to continue the identity registration and setup the identity PIN.<br /><br />
                 </text>
                 break;
             case "FullCustomPush":
                 <text>
-                <h3>Full Custom Push Flow Steps</h3> <br />
-                Navigate to <code>@Html.ActionLink("pushController", "Index", "push", null, new { target = "_blank" })</code> for further use.<br />
-                Click the Login button and use the browser login or scan the QR code. <br />
-                Enter the email address to start a new identity registration and click Create Identity button.<br />
-                Navigate back to <code>@Html.ActionLink("pushController", "Index", "push", null, new { target = "_blank" })</code> and verify the identity.<br />
-                Note that the request is sent to the <code>Verification URL</code> property of the Customer Settings in the Platform.<br />
-                After the identity is activated, the registration flow asks you to setup a PIN for it. <br /><br />
+                    <h3>Full Custom Push Flow Steps</h3> <br />
+                    Note that the client, where you have registered the platform app for this sample case, should be setup to use <code>Verification Method</code> "Fully Custom" with <code>New User Notification Type</code> "Push" and the web app where you're hosting it should have a public IP. <br /><br />
+                    Navigate to <code>@Html.ActionLink("pushController", "Index", "push", null, new { target = "_blank" })</code> for further use.<br />
+                    Click the Login button and use the browser login or scan the QR code. <br />
+                    Enter the email address to start a new identity registration and click Create Identity button.<br />
+                    Navigate back to <code>@Html.ActionLink("pushController", "Index", "push", null, new { target = "_blank" })</code> and verify the identity.<br />
+                    Note that the request is sent to the <code>Verification URL</code> property of the Customer Settings in the Platform.<br />
+                    After the identity is activated, the registration flow asks you to setup a PIN for it. <br /><br />
+                </text>
+                break;
+            case "FullCustomRPInitiated":
+                <text>
+                    <h3>Full Custom RP Initiated Flow Steps</h3> <br />
+                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code>"Fully Custom" with <code>New User Notification Type </code> "RP Initiated". <br /><br />
+                    Enter user id to start the authentication with. <br />
+                    Click the Login button and use the browser login or scan the QR code.<br />
+                    The identity is activated and the registration flow asks you to setup a PIN for it.<br /><br />
                 </text>
                 break;
         }
     </div>
     <div class="col-md-8">
 
-        @using (Html.BeginForm())
+        @if (User.Identity.IsAuthenticated)
         {
-            if (User.Identity.IsAuthenticated)
+            @using (Html.BeginForm("Logout", "Home"))
             {
-                <button name="Logout" id="LogoutId" title="Test" value="Logout">Logout</button>
+                <button type="submit" name="Logout" class="btn btn-default">Logout</button>
             }
-            else
+        }
+        else
+        {
+            @using (Html.BeginForm("Login", "Home", FormMethod.Post, new { @class = "form-inline" }))
             {
                 <div class="inner cover">
-                    <p class="lead">
-                        <a id="btmpin"></a>
-                    </p>
-                    <br />
-                    <br />
-                    <br />
-                    <p>
-                        @Html.CheckBox("UsePrerollId") &nbsp; Use PrerollId login
-                        <div hidden="hidden">
-                            <label for="PrerollId" id="lblPrerollId">PrerollId</label>:
-                            <br />
-                            @Html.TextBox("PrerollId", string.Empty, new { style = "width:500px" })
-                        </div>
-                    </p>
+                    <input type="email" id="email" name="email" placeholder="Email Address (Preroll Id)" class="form-control" />
+                    <input type="submit" value="Login" class="btn btn-primary" />
                 </div>
             }
         }
@@ -82,7 +86,6 @@
         <br />
         <br />
         <br />
-
 
         @if (User.Identity.IsAuthenticated)
         {
@@ -101,25 +104,5 @@
         }
 
     </div>
-
-    @section scripts{
-        <script src="<<Insert correct mpad url here>>" data-authurl="@ViewBag.AuthorizationUri" data-element="btmpin"></script>
-        <script>
-            $("#UsePrerollId").change(
-                function () {
-                    var prerollIdContainer = $("#PrerollId").parent();
-                    prerollIdContainer.toggle();
-                    if (prerollIdContainer.is(":visible")) {
-                        $('#PrerollId').change(function (event) {
-                            var prerollIdData = document.getElementById('PrerollId').value;
-                            $('#btmpin').attr("data-prerollid", prerollIdData);
-                        });
-                    }
-                    else {
-                        $('#btmpin').removeAttr("data-prerollid");
-                    }
-                });
-        </script>
-    }
 
 </div>

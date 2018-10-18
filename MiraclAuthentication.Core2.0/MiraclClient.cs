@@ -166,6 +166,59 @@ namespace Miracl
 
             return GetAuthorizationRequestUrl(baseUri, properties, userStateString);
         }
+     
+        /// <summary>
+        /// Gets an activation token from the provided user id and device name and constructs the authorization url for user activation to redirect to.
+        /// </summary>
+        /// <param name="userId">The user identifier, e.g. an email address.</param>
+        /// <param name="deviceName">Name of the device.</param>
+        /// <param name="baseUri">The base URI of the calling app.</param>
+        /// <param name="options">(Optional) The options for authentication.</param>
+        /// <param name="properties">(Optional) The authentication session properties.</param>
+        /// <param name="userStateString">(Optional) Specify a new Open ID Connect user state. If not set, new GUID is generated instead.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">userId</exception>
+        /// <exception cref="Exception">Cannot generate a user from the server response.</exception>
+        public async Task<string> GetRPInitiatedAuthUriAsync(string userId, string deviceName, string baseUri, MiraclOptions options = null, AuthenticationProperties properties = null, string userStateString = null)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ArgumentNullException(nameof(userId));
+            }
+
+            // need to get the authorization uri first so it initializes the discovery
+            string authUrl = await GetAuthorizationRequestUrlAsync(baseUri, options, properties, userStateString);
+
+            var httpClient = this.Options.BackchannelHttpHandler != null
+               ? new HttpClient(this.Options.BackchannelHttpHandler)
+               : new HttpClient();
+
+            var postData = JsonConvert.SerializeObject(new { userId = userId, deviceName = deviceName });
+            var content = new StringContent(postData, Encoding.UTF8, "application/json");
+            var byteArray = Encoding.ASCII.GetBytes(this.Options.ClientId + ":" + this.Options.ClientSecret);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+
+            var baseAddr = this.Options.Authority + Constants.ActivateInitiateEndpoint;
+            var response = await httpClient.PostAsync(baseAddr, content);
+
+            if (response.StatusCode == HttpStatusCode.RequestTimeout)
+            {
+                throw new Exception(string.Format("No connection with the Platform at {0}.", baseAddr));
+            }
+
+            string respContent;
+            try
+            {
+                respContent = await response.Content.ReadAsStringAsync();
+            }
+            catch
+            {
+                throw new Exception("Cannot generate an activation token from the server response.");
+            }
+
+            var actToken = JObject.Parse(respContent).TryGetValue("actToken", out JToken value) ? value.ToString() : null;
+            return string.Format("{0}&prerollid={1}&acttoken={2}", authUrl, userId, actToken);
+        }
 
         /// <summary>
         /// Returns the authentication properties of the response if the validation succeeds or null
@@ -287,7 +340,7 @@ namespace Miracl
             if (contentType.MediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
             {
                 this.UserJson = JObject.Parse(userInfoResponse);
-            }          
+            }
             else
             {
                 return null;
@@ -637,7 +690,7 @@ namespace Miracl
                 Scope = string.Join(" ", Options.Scope),
                 Nonce = this.Nonce
             };
-            
+
             if (properties == null)
             {
                 properties = new AuthenticationProperties
@@ -654,7 +707,7 @@ namespace Miracl
             var authUrl = message.CreateAuthenticationRequestUrl();
             return authUrl;
         }
-        
+
         private async Task LoadOpenIdConnectConfigurationAsync()
         {
             if (!this.Options.IsConfigured)
@@ -772,7 +825,7 @@ namespace Miracl
 
             return tokenEndpointResponse;
         }
-        
+
         private AuthenticationProperties ValidateAndFillResponseProperties(OpenIdConnectMessage authorizationResponse)
         {
             if (!string.IsNullOrEmpty(authorizationResponse.Error))
@@ -839,7 +892,7 @@ namespace Miracl
                 properties.Items[OpenIdConnectSessionProperties.CheckSessionIFrame] = this.Options.Configuration.CheckSessionIframe;
             }
         }
-                
+
         private async Task<bool> IsResponseValidAsync(AuthenticationProperties properties, string userId)
         {
             if (this.TokenEndpointResponse == null || this.TokenEndpointResponse.AccessToken == null || string.IsNullOrEmpty(this.TokenEndpointResponse.IdToken))
@@ -983,7 +1036,7 @@ namespace Miracl
                 throw new ArgumentException("No `certificate` in the JSON response.");
             }
             var respToken = certToken.ToString();
-            
+
             var parts = respToken.Split('.');
             if (parts.Length != 3)
             {
@@ -1082,7 +1135,7 @@ namespace Miracl
 
             var principal = this.Options.SecurityTokenValidator.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
             SaveValidatedToken(validatedToken, token);
-            
+
             return principal;
         }
 
