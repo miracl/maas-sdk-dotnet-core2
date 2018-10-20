@@ -618,7 +618,9 @@ namespace Miracl
         private string GetAuthorizationRequestUrl(string baseUri, AuthenticationProperties properties, string userStateString = null)
         {
             this.CallbackUrl = baseUri.TrimEnd('/') + this.Options.CallbackPath;
-            string scope = this.Options.Scope.Count() > 0 ? string.Join(" ", Options.Scope) : Constants.Scope;
+            IEnumerable<string> addedScopes = Options.Scope.Where(c => !Constants.Scope.Contains(c));
+            string scope = addedScopes.Count() > 0 ? Constants.Scope + " " + string.Join(" ", addedScopes) : Constants.Scope;
+        
             if (Options.ProtocolValidator.RequireNonce)
             {
                 this.Nonce = Options.ProtocolValidator.GenerateNonce();
@@ -1208,7 +1210,7 @@ namespace Miracl
                 return string.Empty;
 
             JToken value;
-            return this.UserJson.TryGetValue(propertyName, out value) ? value.ToString() : null;
+            return this.UserJson.TryGetValue(propertyName, out value) ? value.ToString() : string.Empty;
         }
         #endregion
         #endregion
