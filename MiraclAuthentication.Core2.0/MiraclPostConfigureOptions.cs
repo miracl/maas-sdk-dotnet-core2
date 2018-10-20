@@ -4,6 +4,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 
@@ -29,7 +31,7 @@ namespace Miracl
         /// <param name="options">The options instance to configure.</param>
         /// <exception cref="InvalidOperationException">The MetadataAddress or Authority must use HTTPS unless disabled for development by setting RequireHttpsMetadata=false.</exception>
         public void PostConfigure(string name, MiraclOptions options)
-        {                                   
+        {
             if (string.IsNullOrEmpty(options.SignOutScheme))
             {
                 options.SignOutScheme = options.SignInScheme;
@@ -42,7 +44,7 @@ namespace Miracl
                                     typeof(MiraclClient).FullName, Constants.AuthenticationScheme, "v1");
                 options.StateDataFormat = new PropertiesDataFormat(dataProtector);
             }
-            
+
             if (options.StringDataFormat == null)
             {
                 var dataProtector = options.DataProtectionProvider.CreateProtector(
@@ -53,7 +55,7 @@ namespace Miracl
 
                 options.StringDataFormat = new SecureDataFormat<string>(new StringSerializer(), dataProtector);
             }
-    
+
             if (options.Backchannel == null)
             {
                 options.Backchannel = new HttpClient(options.BackchannelHttpHandler ?? new HttpClientHandler());
@@ -91,7 +93,7 @@ namespace Miracl
                     }
 
                     options.ConfigurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(options.MetadataAddress, new OpenIdConnectConfigurationRetriever(),
-                        new HttpDocumentRetriever(options.Backchannel) { RequireHttps = options.RequireHttpsMetadata });                    
+                        new HttpDocumentRetriever(options.Backchannel) { RequireHttps = options.RequireHttpsMetadata });
                 }
             }
 
@@ -102,12 +104,19 @@ namespace Miracl
                     options.DvsConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(options.DvsConfiguration);
                 }
                 else
-                {                    
+                {
                     options.DvsConfigurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(options.Authority + Constants.DvsPublicKeyString, new OpenIdConnectConfigurationRetriever(),
                         new HttpDocumentRetriever(options.Backchannel) { RequireHttps = options.RequireHttpsMetadata });
                 }
             }
-            
+
+            string[] scopes = Constants.Scope.Split(" ");
+            IEnumerable<string> toAdd = scopes.Where(s => !options.Scope.Contains(s));
+            foreach (var scope in toAdd)
+            {
+                options.Scope.Add(scope);
+            }
+          
             options.IsConfigured = true;
         }
 
