@@ -11,11 +11,33 @@ namespace MiraclAuthenticationApp.Controllers
     public class HomeController : Controller
     {
         internal static MiraclClient Client;
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        public async Task<ActionResult> Login(string email)
         {
             var url = Request.Scheme + "://" + Request.Host.Value;
-            ViewBag.AuthorizationUri = await GetUrl(url);
-            return View();
+            var authorizationUri = await GetUrl(url);
+            // The following code is used to populate prerollid if provided during the authentication process
+            if (!string.IsNullOrEmpty(email))
+            {
+                authorizationUri += "&prerollid=" + email;
+            }
+            return Redirect(authorizationUri);
+        }
+
+        public async Task<ActionResult> Logout(string data)
+        {
+            Client?.ClearUserInfo(false);
+            await Request.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index");
         }
 
         internal static async Task<string> GetUrl(string url)
@@ -25,31 +47,13 @@ namespace MiraclAuthenticationApp.Controllers
                 Client = new MiraclClient(new MiraclOptions
                 {
                     ClientId = Startup.Configuration["zfa:ClientId"],
-                    ClientSecret = Startup.Configuration["zfa:ClientSecret"], 
-                    SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme,                     
+                    ClientSecret = Startup.Configuration["zfa:ClientSecret"],
+                    SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme,
                     SaveTokens = true
                 });
             }
 
             return await Client.GetAuthorizationRequestUrlAsync(url);
-        }
-
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
-
-        [HttpPost]
-        public async Task<ActionResult> Index(string Logout)
-        {
-            if (Logout != null)
-            {
-                Client.ClearUserInfo(false);
-                await Request.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            }
-
-            return RedirectToAction("Index");
         }
     }
 }

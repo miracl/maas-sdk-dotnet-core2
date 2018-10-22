@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Miracl;
-using System;
 using System.Threading.Tasks;
 
 namespace MiraclIdentityVerificationApp.Controllers
@@ -98,7 +97,7 @@ namespace MiraclIdentityVerificationApp.Controllers
             {
                 if (string.IsNullOrEmpty(email))
                 {
-                    ViewBag.ErrorMsg = "You need to enter an email which you want to start the authentication with.";
+                    ViewBag.ErrorMsg = "You need to enter an email which you want to start the custom RP initiated authentication with.";
                     return View("Error");
                 }
                 string device = System.Net.Dns.GetHostName();
@@ -225,8 +224,8 @@ namespace MiraclIdentityVerificationApp.Controllers
             FullCustomPushClient?.ClearUserInfo(false);
             FullCustomPullClient?.ClearUserInfo(false);
             await Request.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        }   
-        
+        }
+
         #endregion
     }
 }
