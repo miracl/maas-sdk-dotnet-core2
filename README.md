@@ -93,7 +93,7 @@ Use `client.ClearUserInfo()` to clear user authorization status.
 
 #### Use PrerollId
 
-In order to use PrerollId functionality in your web app, you should have an input where the user to enter it to:
+In order to use the PrerollId functionality in your web app, you should have an input where the user to enter it to:
 ```	
 <input type="email" id="email" name="email" placeholder="Email Address (Preroll Id)" />
 ```

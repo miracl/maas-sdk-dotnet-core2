@@ -26,7 +26,7 @@ namespace MiraclIdentityVerificationApp.Controllers
         internal static MiraclClient Client;
 
         #region Actions        
-        public async Task<ActionResult> Index()
+        public ActionResult Index()
         {
             SetupUserVerificationMethod(UserVerificationMethod.StandardEmail);
             return View();
@@ -223,6 +223,7 @@ namespace MiraclIdentityVerificationApp.Controllers
             CustomEmailClient?.ClearUserInfo(false);
             FullCustomPushClient?.ClearUserInfo(false);
             FullCustomPullClient?.ClearUserInfo(false);
+            FullCustomRPInitiatedClient?.ClearUserInfo(false);
             await Request.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         }
 
