@@ -34,6 +34,7 @@
                     <li class="@(ViewContext.RouteData.Values["Action"].ToString() == "CustomEmail" ? "active" : "")">@Html.ActionLink("Custom Email", "CustomEmail", "Home")</li>
                     <li class="@(ViewContext.RouteData.Values["Action"].ToString() == "FullCustomPush" ? "active" : "")">@Html.ActionLink("Full Custom Push", "FullCustomPush", "Home")</li>
                     <li class="@(ViewContext.RouteData.Values["Action"].ToString() == "FullCustomPull" ? "active" : "")">@Html.ActionLink("Full Custom Pull", "FullCustomPull", "Home")</li>
+                    <li class="@(ViewContext.RouteData.Values["Action"].ToString() == "FullCustomRPInitiated" ? "active" : "")">@Html.ActionLink("Full Custom RP Initiated", "FullCustomRPInitiated", "Home")</li>
                 </ul>
             </div>
         </div>

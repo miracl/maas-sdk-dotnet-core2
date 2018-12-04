@@ -57,20 +57,26 @@ client = new MiraclClient(new MiraclOptions
 });
 ```
 
-`CLIENT_ID` and `CLIENT_SECRET` are obtained from the MIRACL server and are unique per application. The authentication scheme has to be specified to be same as the one set in the `ConfigureServices` method of the application. If you need the tokens (access token, id token and refresh token), the `SaveTokens` property has to be set.
+`CLIENT_ID` and `CLIENT_SECRET` are obtained from the [MIRACL server](https://trust.miracl.cloud/) and are unique per application. The authentication scheme has to be specified to be same as the one set in the `ConfigureServices` method of the application. If you need the tokens (access token, id token and refresh token), the `SaveTokens` property has to be set.
 
 #### Authorization flow
 
-If the user is not authorized, (s)he should scan the qr code with his/her phone app and authorize on the MIRACL server. This could be done as pass the authorize uri to the QR code by `ViewBag.AuthorizationUri = await client.GetAuthorizationRequestUrlAsync(baseUri)` on the server and use it in the client with the following code:
+If the user is not authorized, (s)he should scan the qr code with his/her phone app and authorize on the MIRACL server. 
+You need to have a login button on your view page:
 
 ```
-<a id="btmpin"></a>
-
-@section scripts{
-<script src="<<Insert correct mpad url here>>" data-authurl="@ViewBag.AuthorizationUri" data-element="btmpin"></script>
-}
+<input type="submit" value="Login" />
+ ```
+which when clicked should redirects you to the Miracl platform for authorization:
 ```
-Please refer to your distributor-specific documentation to find the correct url for the mpad.js `script src`.
+var authorizationUri = await client.GetAuthorizationRequestUrlAsync(WebAppAbsoluteUri); 
+return Redirect(authorizationUri);
+```
+or use the following method for RP initiated authorization (see [Authorization Flow section](https://github.com/miracl/maas-sdk-dotnet-core2/#authorization-flow) for more details):
+```
+string authUri = await client.GetRPInitiatedAuthUriAsync(email, device, WebAppAbsoluteUri);
+return Redirect(authUri);
+```
 
 When the user is being authorized, (s)he is returned to the `redirect uri` defined at creation of the application in the server. The redirect uri should be the same as the one used by the `MiraclClient` object (constructed by the appBaseUri + `CallbackPath` value of the `MiraclOptions` object by default).
 
@@ -87,42 +93,18 @@ Use `client.ClearUserInfo()` to clear user authorization status.
 
 #### Use PrerollId
 
-In order to use PrerollId functionality in your web app, you should set `data-prerollid` parameter with the desired preroll id to the data element passed for authentication:
+In order to use the PrerollId functionality in your web app, you should have an input where the user to enter it to:
 ```	
-<a id="{{buttonElementID}}" data-prerollid="{{prerollID}}></a>
+<input type="email" id="email" name="email" placeholder="Email Address (Preroll Id)" />
 ```
-
-In the current app this could be achieved with the following code:
+Its value should be added as part of the authorization url query string as follows:
 ```
-<p>
-	<a id="btmpin"></a>
-</p>
-<p>
-	@Html.CheckBox("UsePrerollId") &nbsp; Use PrerollId login
-	<div hidden="hidden">
-		<label for="PrerollId" id="lblPrerollId">PrerollId</label>:
-		<br />
-		@Html.TextBox("PrerollId", string.Empty, new { style = "width:500px" })
-	</div>
-</p>
-
-<script>
-	$("#UsePrerollId").change(
-	function () {
-		var prerollIdContainer = $("#PrerollId").parent();
-		prerollIdContainer.toggle();
-		if (prerollIdContainer.is(":visible")) {
-			$('#PrerollId').change(function (event) {
-				var prerollIdData = document.getElementById('PrerollId').value;
-				$('#btmpin').attr("data-prerollid", prerollIdData);
-			});
-
-		}
-		else {
-			$('#btmpin').removeAttr("data-prerollid");
-		}
-	});
-</script>
+var authorizationUri = await client.GetAuthorizationRequestUrlAsync(WebAppAbsoluteUri);
+if (!string.IsNullOrEmpty(email))
+{
+    authorizationUri += "&prerollid=" + email;
+}
+return Redirect(authorizationUri);
 ```
 
 #### DVS flow
@@ -143,20 +125,21 @@ After the client (mobile) app generates the message, it sends it to the server (
  - full custom verification which supports two user notification types  
  		- push - after the user has started the identity registration, the Platform sends a request to the Verification URL set by the customer in his/her Platform account settings where the identity is verified and activated for further PIN setup  
  		- pull - after the user has started the identity registration, the Relying Party application sends a request to the Platform to know if a registration for this identity has started. If so, a custom logic for its validating could be applied before activating it and continuing to setup PIN   
+		- RP initiated - the user starts the identity registration, the RP calls `GetRPInitiatedAuthUriAsync` method which initiates the identity activation and then continue to setup PIN
  
- There are fields in the Platform customer settings for setting up the Verification Method, the New User Notification Type (if a Full Custom method is set) and one for the Verification URL (if a Full Custom Push verification method used).  
+ There are fields in the Platform customer settings for setting up the Verification Method, the New User Notification Type (if a Full Custom method is set) and one for the Verification URL (if a Full Custom Push or Custom Email verification method is used).  
  The methods which the Relying Party application should use to facilitate these operations are as follows: 
  - `GetIdentityInfoAsync` - used to require identity information per its `hashMPinId` and `activateKey`
  - `ActivateIdentityAsync` - activates the identity in the Platform and the user could continue its registration and setup a PIN
  - `HandleNewIdentityPushAsync` - validates the request from the Platform when Full Custom Verification with Push type used and return an `Identity` object
  - `HandleNewIdentityPullAsync` - requests from the Platform if there is a started registration for the specified identity id and returns an `Identity` for it if so
  - `ParseCustomEmailQueryString` - parses the query string for the Custom Email Verification and returns an `IdentityActivationParams` object
+ - `GetRPInitiatedAuthUriAsync` - initiates the identity activation and returns the authentication url the RP should redirects to in order to continue the RP initiated identity registration PIN setup
 
 ## Samples
 
-Replace `CLIENT_ID`, `CLIENT_SECRET` and `CUSTOMER_ID` (if necessary) in the `appsettings.json` file with your valid credential data from the MIRACL server or use the [recommended approach](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets) by Microsoft. `baseUri` (which is passed to the `MiraclClient.GetAuthorizationRequestUrlAsync` method in the first sample) should be the uri of your web application.
-Note that the redirect uri, if not explicitly specified in the `MiraclOptions`, is constructed as `baseUri\login` (the default value of the `CallbackPath` property is `\login`) and it should be passed to the MIRACL server when requiring authentication credential.
-You have to setup the mpad.js url in the Views/Home/Index.cshtml too as explained in the [Authorization Flow section](https://github.com/miracl/maas-sdk-dotnet-core2/#authorization-flow).
+Replace `CLIENT_ID`, `CLIENT_SECRET` and `CUSTOMER_ID` (if necessary) in the `appsettings.json` file with your valid credential data from the [MIRACL server](https://trust.miracl.cloud/) or use the [recommended approach](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets) by Microsoft. `baseUri` (which is passed to the `MiraclClient.GetAuthorizationRequestUrlAsync` method in the first sample) should be the uri of your web application.
+Note that the redirect uri, if not explicitly specified in the `MiraclOptions`, is constructed as `baseUri\login` (the default value of the `CallbackPath` property is `\login`) and it should be passed to the MIRACL server when requiring authentication credential.).
 
 * `MiraclAuthenticationApp.Core2.0` demonstrates the usage of `MiraclClient` to authenticate to the MIRACL server
 
