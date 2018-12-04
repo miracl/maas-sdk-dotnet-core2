@@ -5,8 +5,6 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Miracl;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,7 +43,7 @@ namespace MiraclDvsSigningApp.Controllers
             {
                 return View("Error");
             }
-            
+
             ViewBag.Client = HomeController.Client;
             ViewBag.RedirectUri = Request.Scheme + "://" + Request.Host.Value + HomeController.Client.Options.CallbackPath;
             return View();
@@ -56,7 +54,7 @@ namespace MiraclDvsSigningApp.Controllers
         {
             var docHash = HomeController.Client.DvsCreateDocumentHash(document);
             var timeStamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
-            
+
             // the mfa.js uses the authToken to verify the validity of the provided PIN
             var authToken = HomeController.Client.DvsCreateAuthToken(docHash);
             var documentData = new { hash = docHash, timestamp = timeStamp, authToken };
@@ -65,18 +63,18 @@ namespace MiraclDvsSigningApp.Controllers
         }
 
         [HttpPost]
-        public async Task<JsonResult> VerifySignature(string verificationData)
+        public async Task<JsonResult> VerifySignature(string verificationData, string documentData)
         {
-            var data = JObject.Parse(verificationData);
+            var docData = JObject.Parse(documentData);
+            var ts = docData.TryGetValue("timestamp", out JToken tsValue) ? tsValue.ToString() : null;
 
+            var data = JObject.Parse(verificationData);
             var mPinId = data.TryGetValue("mpinId", out JToken mPinIdValue) ? mPinIdValue.ToString() : null;
             var publicKey = data.TryGetValue("publicKey", out JToken publicKeyValue) ? publicKeyValue.ToString() : null;
             var u = data.TryGetValue("u", out JToken uValue) ? uValue.ToString() : null;
             var v = data.TryGetValue("v", out JToken vValue) ? vValue.ToString() : null;
             var docHash = data.TryGetValue("hash", out JToken docHashValue) ? docHashValue.ToString() : null;
-            var ts = data.TryGetValue("timestamp", out JToken tsValue) ? tsValue.ToString() : null;
             var dtas = data.TryGetValue("dtas", out JToken dtasValue) ? dtasValue.ToString() : null;
-            
             var signature = new Signature(docHash, mPinId, u, v, publicKey, dtas);
             var timeStamp = int.TryParse(ts, out int timeStampValue) ? timeStampValue : 0;
             var verificationResult = await HomeController.Client.DvsVerifySignatureAsync(signature, timeStamp);
