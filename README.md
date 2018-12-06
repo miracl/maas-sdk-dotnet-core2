@@ -1,10 +1,10 @@
 # maas-sdk-dotnet-core2
 
-[![Build status](https://ci.appveyor.com/api/projects/status/xf5ko4rj9og0mu62/branch/master?svg=true)](https://ci.appveyor.com/project/miraclops/maas-sdk-dotnet-core2/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/uocyd6rqvw6ngayc/branch/master?svg=true)](https://ci.appveyor.com/project/miracl/maas-sdk-dotnet-core2/branch/master)
 [![Coverage Status](https://coveralls.io/repos/github/miracl/maas-sdk-dotnet-core2/badge.svg?branch=master)](https://coveralls.io/github/miracl/maas-sdk-dotnet-core2?branch=master)
 
 * **category**:    SDK
-* **copyright**:   2017 MIRACL UK LTD
+* **copyright**:   2018 MIRACL UK LTD
 * **license**:     ASL 2.0 - http://www.apache.org/licenses/LICENSE-2.0
 * **link**:        https://github.com/miracl/maas-sdk-dotnet-core2
 

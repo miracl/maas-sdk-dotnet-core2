@@ -11,7 +11,7 @@ environment:
   OPENCOVER_EXE: '%COVERAGE_DIR%\OpenCover.%OPENCOVER_VER%\tools\OpenCover.Console.exe'
   COVERALLS_NET_EXE: '%COVERAGE_DIR%\coveralls.net.%COVERALLS_NET_VER%\tools\csmacnz.Coveralls.exe'
   COVERALLS_REPO_TOKEN:
-    secure: muIbtrK17bhXin1hpAppBFqV8t1p+oiVGYtH5P/DDcPVadBxnupP1woOBPDifIFF
+    secure: fLZZw+++JKtMxFXPPtisMvlx0zBpyn6NlRN5YoTuZd15tqvoBZhgwsyDU5fiI4y1
   MFA_CLIENT_SECRET:
     secure: wA4diTt4R8MV83KvKB3yKstc0tSwqDj4GkgGLel0mD5RgLiki3AHGuphsij7DPSM
   MFA_CLIENT_ID:
@@ -36,12 +36,3 @@ test_script:
   - cmd: |
       %OPENCOVER_EXE% -target:dotnet.exe -targetargs:"test -c Release MiraclAuthentication.Core2.0.Tests" -filter:"%COVERAGE_FILTER%" -register:user -oldStyle -returntargetcode -output:%COVERAGE_DIR%\coverage.xml
       %COVERALLS_NET_EXE% --opencover -i %COVERAGE_DIR%\coverage.xml --serviceName appveyor --useRelativePaths --jobId %APPVEYOR_BUILD_NUMBER%
-  - ps: |
-      git clone -q https://github.com/miracl/maas-sdk-integration.git
-      docker build -f maas-sdk-integration/Dockerfile.windows -t test-suite ./maas-sdk-integration
-      docker build -f demo/Dockerfile -t demo .
-      docker-compose -f maas-sdk-integration/docker-compose-windows.yml up -d 2>$null
-      echo "Running integration tests..."
-      $demoURL = "http://$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' maas-sdk-dotnet_demo):8000"
-      docker run --rm -it --network nat test-suite -c "go run cmd/wait-for/main.go -addr $demoURL/config"
-      docker run --rm -it --network nat test-suite -c "go test -tags 'ignoredefaultcurves BN254CX' -v -addr $demoURL -mfa-api https://api.mpin.io -client-secret $env:MFA_CLIENT_SECRET"
