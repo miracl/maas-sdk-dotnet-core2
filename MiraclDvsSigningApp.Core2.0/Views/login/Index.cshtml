@@ -27,7 +27,6 @@
             <br />
             <strong>Signature:</strong>
             <pre id="signatureData"></pre>
-            <a class="btn btn-primary" onclick="dvsVerifySignature($('#signatureData').html())">Verify signature</a>
         </div>
         <br />
         <div id="verificationResult" class="hidden">
@@ -86,23 +85,23 @@
         });
 
         function dvsRegister() {
-                var successCb = function () {
-                    var element = $("#dvsRegisterResponse > span");
-                    element.removeClass("text-danger");
-                    element.html("An identity <b>@ViewBag.Client.UserId</b> has been registered for DVS. Now you can sign documents with it.");
+            var successCb = function () {
+                var element = $("#dvsRegisterResponse > span");
+                element.removeClass("text-danger");
+                element.html("An identity <b>@ViewBag.Client.UserId</b> has been registered for DVS. Now you can sign documents with it.");
 
-                    $("#dvsRegister").addClass("hidden");
-                    $("#dvsSign").removeClass("hidden");
-                };
+                $("#dvsRegister").addClass("hidden");
+                $("#dvsSign").removeClass("hidden");
+            };
 
-                var errorCb = function (error) {
-                    var element = $("#dvsRegisterResponse > span");
-                    element.addClass("text-danger");
-                    element.html(error.message);
-                    console.log(error);
-                };
+            var errorCb = function (error) {
+                var element = $("#dvsRegisterResponse > span");
+                element.addClass("text-danger");
+                element.html(error.message);
+                console.log(error);
+            };
 
-                dvs.createIdentity(successCb, errorCb);
+            dvs.createIdentity(successCb, errorCb);
         }
 
         function dvsSign(doc) {
@@ -124,7 +123,7 @@
                         $("#signatureData").html(JSON.stringify(signature, null, 4));
                         $("#signature").removeClass("hidden");
 
-                        dvsVerifySignature(signature, documentData)s;
+                        dvsVerifySignature(signature, documentData);
                     }, function fail(error) {
                         console.error(error);
                     });
@@ -132,7 +131,7 @@
             });
         }
 
-        function dvsVerifySignature(signature) {
+        function dvsVerifySignature(signature, documentData) {
             $.ajax({
                 url: "@Url.Action("VerifySignature", "login")",
                 type: "POST",
