@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/miracl/maas-sdk-dotnet-core2/badge.svg?branch=master)](https://coveralls.io/github/miracl/maas-sdk-dotnet-core2?branch=master)
 
 * **category**:    SDK
-* **copyright**:   2018 MIRACL UK LTD
+* **copyright**:   2019 MIRACL UK LTD
 * **license**:     ASL 2.0 - http://www.apache.org/licenses/LICENSE-2.0
 * **link**:        https://github.com/miracl/maas-sdk-dotnet-core2
 
