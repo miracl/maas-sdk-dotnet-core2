@@ -34,8 +34,8 @@ namespace Miracl
         private OpenIdConnectMessage TokenEndpointResponse;
         private JwtSecurityToken IdTokenEndpointJwt;
         private ClaimsPrincipal TokenEndpointUser;
-        // There could be more than one auth started at a time with the same client, 
-        // so save the auth data on auth start and delete it when auth happens 
+        // There could be more than one auth started at a time with the same client,
+        // so save the auth data on auth start and delete it when auth happens
         internal Dictionary<string, string> AuthData = new Dictionary<string, string>();
         #endregion
 
@@ -98,7 +98,7 @@ namespace Miracl
         }
 
         /// <summary>
-        /// A randomly generated unique value included in the request that is returned in the token response used for preventing cross-site request forgery attacks. 
+        /// A randomly generated unique value included in the request that is returned in the token response used for preventing cross-site request forgery attacks.
         /// </summary>
         /// </value>
         /// The State value.
@@ -387,7 +387,7 @@ namespace Miracl
         /// <param name="signature">The signature to be verified.</param>
         /// <param name="ts">Timestamp showing when the signature was made.</param>
         /// <returns><para cref="VerificationResult"/> object which indicates if the specified signature is properly signed.</returns>
-        /// <exception cref="ArgumentNullException">Signature cannot be null or empty</exception> 
+        /// <exception cref="ArgumentNullException">Signature cannot be null or empty</exception>
         /// <exception cref="InvalidOperationException">No Options for verification - client credentials are used for the verification</exception>
         /// <exception cref="ArgumentException">
         /// Timestamp cannot has a negative value
@@ -486,176 +486,6 @@ namespace Miracl
             string hmac = SignHmacMessage(docHash, this.Options.ClientSecret);
             string authToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(string.Format("{0}:{1}", this.Options.ClientId, hmac)));
             return authToken;
-        }
-
-        /// <summary>
-        /// Validates the JSON received from the Platform when Full Custom Verification with Push type is used.
-        /// </summary>
-        /// <param name="newUserJson">A JSON string containing JWT with the user information which the Platform sends for activation.</param>
-        /// <returns>An instance of the <see cref="Identity"/> class.</returns>
-        /// <exception cref="ArgumentException">
-        /// No `new_user_token` in the JSON input
-        /// or
-        /// Invalid response
-        /// </exception>
-        public async Task<Identity> HandleNewIdentityPushAsync(string newUserJson)
-        {
-            var newUserToken = JObject.Parse(newUserJson).TryGetValue("new_user_token", out JToken value) ? value.ToString() : null;
-            if (newUserToken == null)
-            {
-                throw new ArgumentException("No `new_user_token` in the JSON input.");
-            }
-
-            var principal = await ValidateTokenAsync(newUserToken, this.Options.CustomerId);
-            var userData = principal.Claims.FirstOrDefault(c => c.Type.Equals("events"));
-            if (userData == null)
-            {
-                throw new ArgumentException("Invalid response.");
-            }
-
-            return CreateIdentity(userData);
-        }
-
-        /// <summary>
-        /// Makes a request to the Platform to check if there is a started registration for the specified userId.
-        /// </summary>
-        /// <param name="userId">The user identifier, e.g. an email address.</param>
-        /// <returns>An instance of the <see cref="Identity"/> class.</returns>
-        /// <exception cref="Exception">
-        /// No connection with the Platform at " + baseAddr
-        /// or
-        /// Cannot generate a user from the server response
-        /// </exception>
-        public async Task<Identity> HandleNewIdentityPullAsync(string userId)
-        {
-            var httpClient = this.Options.BackchannelHttpHandler != null
-               ? new HttpClient(this.Options.BackchannelHttpHandler)
-               : new HttpClient();
-
-            var postData = JsonConvert.SerializeObject(new { userId = userId });
-            var content = new StringContent(postData, Encoding.UTF8, "application/json");
-            var byteArray = Encoding.ASCII.GetBytes(this.Options.ClientId + ":" + this.Options.ClientSecret);
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-
-            var baseAddr = this.Options.Authority + Constants.PullEndpoint;
-            var response = await httpClient.PostAsync(baseAddr, content);
-
-            if (response.StatusCode == HttpStatusCode.RequestTimeout)
-            {
-                throw new Exception(string.Format("No connection with the Platform at {0}.", baseAddr));
-            }
-
-            Identity identity;
-            try
-            {
-                var respContent = await response.Content.ReadAsStringAsync();
-                identity = JsonConvert.DeserializeObject(respContent, typeof(Identity)) as Identity;
-            }
-            catch
-            {
-                throw new Exception("Cannot generate a user from the server response.");
-            }
-
-            return identity;
-        }
-
-        /// <summary>
-        /// Activates an identity to the Platform.
-        /// </summary>
-        /// <param name="activationParams">The activation parameters.</param>
-        /// <returns>
-        /// The status code of the response from the Platform when activating the identity.
-        /// </returns>
-        /// <exception cref="ArgumentNullException">activationParams</exception>
-        public async Task<HttpStatusCode> ActivateIdentityAsync(IdentityActivationParams activationParams)
-        {
-            if (activationParams == null)
-            {
-                throw new ArgumentNullException(nameof(activationParams));
-            }
-
-            var httpClient = this.Options.BackchannelHttpHandler != null
-                ? new HttpClient(this.Options.BackchannelHttpHandler)
-                : new HttpClient();
-
-            var postData = JsonConvert.SerializeObject(new { hashMPinId = activationParams.MPinIdHash, activateKey = activationParams.ActivateKey });
-            var content = new StringContent(postData, Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync(this.Options.Authority + Constants.ActivateEndpoint, content);
-            if (response.StatusCode != HttpStatusCode.OK || response.Content == null)
-            {
-                return response.StatusCode;
-            }
-
-            var respContent = await response.Content.ReadAsStringAsync();
-            var respJson = JObject.Parse(respContent);
-            if (!IsJsonStringValid(respJson, "status", "OK") || !IsJsonStringValid(respJson, "message", "Activated"))
-            {
-                return HttpStatusCode.InternalServerError;
-            }
-
-            return HttpStatusCode.OK;
-        }
-
-        /// <summary>
-        /// Gets the identity information.
-        /// </summary>
-        /// <param name="activationParams">The activation parameters.</param>
-        /// <returns>
-        /// An instance of the <see cref="IdentityInfo" /> class.
-        /// </returns>
-        /// <exception cref="ArgumentNullException">activationParams</exception>
-        /// <exception cref="ArgumentException">Invalid response.</exception>
-        public async Task<IdentityInfo> GetIdentityInfoAsync(IdentityActivationParams activationParams)
-        {
-            if (activationParams == null)
-            {
-                throw new ArgumentNullException(nameof(activationParams));
-            }
-
-            var httpClient = this.Options.BackchannelHttpHandler != null
-               ? new HttpClient(this.Options.BackchannelHttpHandler)
-               : new HttpClient();
-
-            var postData = JsonConvert.SerializeObject(new { hashMPinId = activationParams.MPinIdHash, activateKey = activationParams.ActivateKey });
-            var content = new StringContent(postData, Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync(this.Options.Authority + Constants.GetIdentityInfoEndpoint, content);
-            if (response.StatusCode != HttpStatusCode.OK || response.Content == null)
-            {
-                return null;
-            }
-
-            var respContent = await response.Content.ReadAsStringAsync();
-            var respJson = JObject.Parse(respContent);
-
-            string userId = TryGetTokenDataByName(respJson, "userId");
-            string deviceName = TryGetTokenDataByName(respJson, "deviceName");
-
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(deviceName))
-            {
-                throw new ArgumentException("Invalid response.");
-            }
-
-            return new IdentityInfo(userId, deviceName);
-        }
-
-        /// <summary>
-        /// Parses the query string for the custom email verification.
-        /// </summary>
-        /// <param name="queryString">The query string.</param>
-        /// <returns>An instance of the <see cref="IdentityActivationParams" /> class or null.</returns>
-        public IdentityActivationParams ParseCustomEmailQueryString(IQueryCollection queryString)
-        {
-            if (queryString == null || string.IsNullOrEmpty(queryString["i"]) || string.IsNullOrEmpty(queryString["s"]))
-            {
-                return null;
-            }
-
-            var activateKey = queryString["s"];
-            var hashMPinId = queryString["i"];
-
-            return new IdentityActivationParams(hashMPinId, activateKey);
         }
         #endregion
 
@@ -1102,7 +932,7 @@ namespace Miracl
             return !string.IsNullOrEmpty(prm) && prm == expectedValue;
         }
 
-        // by default the token is signed with audience ClientId, but when full custom push identity verification used, the token is signed with CustomId
+        // by default the token is signed with the audience ClientId
         private async Task<ClaimsPrincipal> ValidateTokenAsync(string token, string audience)
         {
             if (!Options.SecurityTokenValidator.CanReadToken(token))
