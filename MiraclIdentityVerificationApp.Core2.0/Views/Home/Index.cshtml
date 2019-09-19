@@ -12,50 +12,16 @@
                 <text>
                     <h3>Standard Flow Steps</h3>
                     <br />
-                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code> "Standard Email". <br /><br />
+                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code> "Default (Email)". <br /><br />
                     Click the login button.<br />
                     Choose browser or QR code login and follow the description for creating a new identity.
                     <br /><br />
                 </text>
                 break;
-            case "CustomEmail":
-                <text>
-                    <h3>Custom Email Flow Steps</h3><br />
-                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code> "Custom Email". <br /><br />
-                    Click the login button. <br />
-                    Choose browser or QR code login and enter your new identity. <br />
-                    Open the link from the received email to verify your identity. <br />
-                    The <code>customEmailController</code> takes care of activating the identity (in this sample, we activate every not expired identity). <br />
-                    After the identity is activated, the registration flow asks you to setup a PIN for it.  <br /><br />
-                </text>
-                break;
-            case "FullCustomPull":
-                <text>
-                    <h3>Full Custom Pull Flow Steps</h3><br />
-                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code> "Fully Custom" with <code>New User Notification Type</code> "Pull". <br /><br />
-                    Navigate to <code>@Html.ActionLink("pullController", "Index", "pull", null, new { target = "_blank" })</code> for further use.<br />
-                    Click the Login button and use the browser login or scan the QR code.<br />
-                    Enter the email address to start a new identity registration and click Create Identity button.<br />
-                    Navigate back to <code>@Html.ActionLink("pullController", "Index", "pull", null, new { target = "_blank" })</code> and verify the identity.<br />
-                    Navigate back to Platform registration page to continue the identity registration and setup the identity PIN.<br /><br />
-                </text>
-                break;
-            case "FullCustomPush":
-                <text>
-                    <h3>Full Custom Push Flow Steps</h3> <br />
-                    Note that the client, where you have registered the platform app for this sample case, should be setup to use <code>Verification Method</code> "Fully Custom" with <code>New User Notification Type</code> "Push" and the web app where you're hosting it should have a public IP. <br /><br />
-                    Navigate to <code>@Html.ActionLink("pushController", "Index", "push", null, new { target = "_blank" })</code> for further use.<br />
-                    Click the Login button and use the browser login or scan the QR code. <br />
-                    Enter the email address to start a new identity registration and click Create Identity button.<br />
-                    Navigate back to <code>@Html.ActionLink("pushController", "Index", "push", null, new { target = "_blank" })</code> and verify the identity.<br />
-                    Note that the request is sent to the <code>Verification URL</code> property of the Customer Settings in the Platform.<br />
-                    After the identity is activated, the registration flow asks you to setup a PIN for it. <br /><br />
-                </text>
-                break;
             case "FullCustomRPInitiated":
                 <text>
-                    <h3>Full Custom RP Initiated Flow Steps</h3> <br />
-                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code>"Fully Custom" with <code>New User Notification Type </code> "RP Initiated". <br /><br />
+                    <h3>Custom Flow Steps</h3> <br />
+                    Note that the client, where you have registered the app in the platform for this sample case, should be setup to use <code>Verification Method</code> "Custom". <br /><br />
                     Enter user id to start the authentication with. <br />
                     Click the Login button and use the browser login or scan the QR code.<br />
                     The identity is activated and the registration flow asks you to setup a PIN for it.<br /><br />
