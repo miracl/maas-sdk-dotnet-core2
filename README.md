@@ -125,7 +125,7 @@ After the client (mobile) app generates the message, it sends it to the server (
    - `GetRPInitiatedAuthUriAsync` - initiates the identity activation and returns the authentication url the RP should redirects to in order to continue the RP initiated identity registration PIN setup
 
  The field Verification Method in the Platform customer settings is responsible for setting the verification method type.
- 
+
 ## Samples
 
 Replace `CLIENT_ID`, `CLIENT_SECRET` and `CUSTOMER_ID` (if necessary) in the `appsettings.json` file with your valid credential data from the [MIRACL server](https://trust.miracl.cloud/) or use the [recommended approach](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets) by Microsoft. `baseUri` (which is passed to the `MiraclClient.GetAuthorizationRequestUrlAsync` method in the first sample) should be the uri of your web application.
@@ -143,7 +143,7 @@ In Visual Studio, you can use the Package Manager Console to apply pending migra
 * `demo` is used for integration testing and is part of a separate solution (`Integration.sln`) and it is not supposed to be run manually
 
 ## Sample Endpoints
-The `MiraclAuthenticationApp.Core2.0` sample handles the following requests in order to serve as an authenticator for a mobile app:
+The `MiraclAuthenticationApp.Core2.0` sample handles the following requests in order to support authentication for a mobile app:
 * POST `/authzurl`
  This returns an http status of OK and data in the following json format:
 ```
